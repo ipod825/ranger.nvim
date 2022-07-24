@@ -1,0 +1,30 @@
+local action = require("ranger.action")
+
+return {
+	-- The command name ranger defined.
+	command = "Ranger",
+	-- open_cmd = "edit",
+	open_cmd = "Tabdrop",
+	highlights = {
+		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
+		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
+		RangerCut = { ctermfg = "grey", fg = "#808080" },
+		RangerCopied = { ctermfg = 13, fg = "#ff00ff" },
+		RangerDir = { ctermfg = 26, fg = "#005fd7" },
+		RangerFile = { ctermfg = "white", fg = "#ffffff" },
+		RangerLink = { ctermfg = 51, fg = "#00ffff" },
+		RangerExe = { ctermfg = 22, fg = "#005f00" },
+	},
+	mappings = {
+		n = {
+			h = action.goto_parent,
+			l = action.open,
+			za = action.toggle_expand,
+			v = action.toggle_select,
+			dd = action.cut_node,
+			d = action.cut_selected_path,
+			y = action.copy_selected_path,
+		},
+		v = {},
+	},
+}

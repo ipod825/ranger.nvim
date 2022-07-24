@@ -1,0 +1,1 @@
+*ranger.txt* A file rowser plugin for neovim.
