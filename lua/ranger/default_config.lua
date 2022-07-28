@@ -20,11 +20,13 @@ return {
 			h = action.goto_parent,
 			l = action.open,
 			za = action.toggle_expand,
-			v = action.toggle_select,
-			dd = action.cut_node,
-			d = action.cut_selected_path,
-			y = action.copy_selected_path,
+			v = action.transfer.toggle_select,
+			dd = action.transfer.cut_current,
+			d = action.transfer.cut_selected,
+			y = action.transfer.copy_selected,
 		},
-		v = {},
+		v = {
+			v = action.transfer.toggle_select,
+		},
 	},
 }

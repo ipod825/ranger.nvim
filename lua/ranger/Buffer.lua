@@ -91,7 +91,6 @@ function M:build_nodes(directory)
 end
 
 function M:reload()
-	require("libp.log").warn("reload")
 	if not self.root then
 		return
 	end
@@ -99,9 +98,7 @@ function M:reload()
 	self:clear_hl(1, -1)
 	self.root:flatten_children():for_each(function(node, row)
 		self:set_row_hl(row, node.highlight)
-		-- self:set_hl(node.highlight, row)
 	end)
-	self.skip_next_cursor_moved = true
 end
 
 function M:redraw()
@@ -141,7 +138,6 @@ function M:config_new(dir_name)
 	self.cur_row = 1
 	self.directory = dir_name
 	self:build_nodes_and_reload()
-	self.skip_next_cursor_moved = false
 
 	local bid = self.id
 	Watcher(dir_name, function(watcher)
@@ -157,13 +153,11 @@ function M:config_new(dir_name)
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		buffer = self.id,
 		callback = function()
-			if self.skip_next_cursor_moved then
-				self.skip_next_cursor_moved = false
-				return
-			end
 			local new_row = vimfn.current_row()
-			-- TODO(smwang): Check https://github.com/neovim/neovim/issues/19511
 			self:clear_hl(self.cur_row)
+			-- TODO(smwang): Workaround on bug of clear_highlight
+			-- https://github.com/neovim/neovim/issues/19511
+			self:set_row_hl(self.cur_row - 1)
 			self:set_row_hl(self.cur_row)
 			self:set_row_hl(new_row)
 			self.cur_row = new_row
