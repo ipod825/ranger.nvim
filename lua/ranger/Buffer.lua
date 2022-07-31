@@ -43,10 +43,13 @@ function M.open(dir_name, opts)
 	local ori_dir_name = dir_name
 
 	dir_name = dir_name:gsub("^~", os.getenv("HOME"))
-	local rel_dir_name = path.join(vim.fn.getcwd(), dir_name)
-	if vim.fn.isdirectory(rel_dir_name) == 1 then
-		dir_name = rel_dir_name
+	if not vim.startswith(dir_name, path.path_sep) then
+		local rel_dir_name = path.join(vim.fn.getcwd(), dir_name)
+		if vim.fn.isdirectory(rel_dir_name) == 1 then
+			dir_name = rel_dir_name
+		end
 	end
+	require("libp.log").warn(dir_name)
 
 	if vim.fn.isdirectory(dir_name) ~= 1 then
 		vim.notify(("%s is not a directory"):format(ori_dir_name), vim.log.levels.WARN)
