@@ -5,6 +5,7 @@ local List = require("libp.datatype.List")
 local Watcher = require("libp.fs.Watcher")
 local vimfn = require("libp.utils.vimfn")
 local path = require("libp.path")
+local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local a = require("plenary.async")
 
@@ -39,6 +40,19 @@ end
 
 function M.open(dir_name, opts)
 	opts = vim.tbl_deep_extend("force", require("ranger.default_config"), opts or {})
+	local ori_dir_name = dir_name
+
+	dir_name = dir_name:gsub("^~", os.getenv("HOME"))
+	local rel_dir_name = path.join(vim.fn.getcwd(), dir_name)
+	if vim.fn.isdirectory(rel_dir_name) == 1 then
+		dir_name = rel_dir_name
+	end
+
+	if vim.fn.isdirectory(dir_name) ~= 1 then
+		vim.notify(("%s is not a directory"):format(ori_dir_name), vim.log.levels.WARN)
+		return
+	end
+
 	if #dir_name > 1 and vim.endswith(dir_name, "/") then
 		dir_name = dir_name:sub(1, #dir_name - 1)
 	end
@@ -68,25 +82,35 @@ function M.open(dir_name, opts)
 	end
 
 	if new then
-		buffer:config_new(dir_name)
+		buffer:_config_new(dir_name)
 		buffer:set_mappings(opts.mappings)
 	end
-	return buffer
+	return buffer, new
 end
 
-function M:add_dir_node_children(node)
-	assert(node.type == "directory")
-	node:extend_children(List(fs.list_dir(node.abspath)):map(function(e)
-		e.abspath = path.join(node.abspath, e.name)
+function M:_add_dir_node_children(node, abspath)
+	abspath = abspath or node.abspath
+
+	node:extend_children(List(fs.list_dir2(abspath)):map(function(e)
+		e.abspath = path.join(abspath, e.name)
 		return Node(e)
 	end))
+
+	for _, child in ipairs(node:flatten_children()) do
+		-- Recursively add children to expanded nodes.
+		if Set.has(self.expanded_abspaths, child.abspath) then
+			self:_add_dir_node_children(child)
+		end
+	end
+
 	node:sort()
 end
 
 function M:build_nodes(directory)
-	local root = Node({ type = "directory", abspath = directory })
+	local root = Node()
 	root:add_child(Node({ type = "header", name = directory }))
-	self:add_dir_node_children(root)
+	self:_add_dir_node_children(root, directory)
+
 	return root
 end
 
@@ -96,12 +120,16 @@ function M:reload()
 	end
 	self:SUPER():reload()
 	self:clear_hl(1, -1)
-	self.root:flatten_children():for_each(function(node, row)
-		self:set_row_hl(row, node.highlight)
+
+	self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
+	self.root:flatten_children():for_each(function(_, row)
+		self:set_row_hl(row, self.cur_row)
 	end)
 end
 
-function M:redraw()
+-- Set content and highlight assuming the nodes (from which the content were
+-- based on) were built.
+function M:draw()
 	local editable_width = vimfn.editable_width(0)
 	self.content = self.root:flatten_children():map(function(e)
 		local res = (" "):rep(e.level * 2) .. e.name
@@ -111,9 +139,8 @@ function M:redraw()
 	self:reload()
 end
 
-function M:build_nodes_and_reload()
+function M:rebuild_nodes()
 	self.root = self:build_nodes(self.directory)
-	self:redraw()
 end
 
 function M:nodes(ind)
@@ -122,11 +149,15 @@ function M:nodes(ind)
 	return res
 end
 
-function M:set_row_hl(row, hl)
+-- If the current buffer (self.id) is not in focus, `cur_vim_row` must be passed
+-- in as otherwise the wrong row (the row of whatever buffer is in focus now)
+-- might be used for highlighting the selected row of self.
+function M:set_row_hl(row, cur_vim_row)
 	local node = self:nodes(row)
+	cur_vim_row = cur_vim_row or vimfn.current_row()
 	if node then
-		hl = hl or node.highlight
-		if vimfn.current_row() == row then
+		local hl = node.highlight
+		if cur_vim_row == row then
 			self:set_hl(hl .. "Sel", row)
 		else
 			self:set_hl(hl, row)
@@ -134,21 +165,72 @@ function M:set_row_hl(row, hl)
 	end
 end
 
-function M:config_new(dir_name)
-	self.cur_row = 1
-	self.directory = dir_name
-	self:build_nodes_and_reload()
+function M:disable_fs_event_watcher()
+	self._watch_fs_event = false
+end
+
+function M:enable_fs_event_watcher()
+	self._watch_fs_event = true
+end
+
+function M:toggle_expand_node(node)
+	if node.type ~= "directory" then
+		return
+	end
+
+	if not Set.has(self.expanded_abspaths, node.abspath) then
+		Set.add(self.expanded_abspaths, node.abspath)
+		self:_add_fs_event_watcher(node.abspath)
+		self:_add_dir_node_children(node)
+	else
+		for _, n in ipairs(node:flatten_children()) do
+			if Set.has(self.expanded_abspaths, n.abspath) then
+				Set.remove(self.expanded_abspaths, n.abspath)
+				self:_remove_rebuild_fs_watcher(n.abspath)
+			end
+		end
+		node:remove_all_children()
+	end
+	self:draw()
+end
+
+function M:_add_fs_event_watcher(directory)
+	self._build_and_draw_watchers = self._build_and_draw_watchers or {}
+
+	assert(self._build_and_draw_watchers[directory] == nil)
+	if self._build_and_draw_watchers[directory] then
+		return
+	end
 
 	local bid = self.id
-	Watcher(dir_name, function(watcher)
+	self._build_and_draw_watchers[directory] = Watcher(directory, function(watcher)
 		if not vim.api.nvim_buf_is_valid(bid) then
 			watcher:stop()
 		else
-			a.void(function()
-				self:build_nodes_and_reload()
-			end)()
+			if self._watch_fs_event then
+				a.void(function()
+					self:rebuild_nodes()
+					self:draw()
+				end)()
+			end
 		end
 	end)
+end
+
+function M:_remove_rebuild_fs_watcher(directory)
+	local watcher = self._build_and_draw_watchers[directory]
+	watcher:stop()
+	self._build_and_draw_watchers[directory] = nil
+end
+
+function M:_config_new(dir_name)
+	self.cur_row = 1
+	self.directory = dir_name
+	self.expanded_abspaths = Set()
+	self:_add_fs_event_watcher(self.directory)
+	self:enable_fs_event_watcher()
+	self:rebuild_nodes()
+	self:draw()
 
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		buffer = self.id,

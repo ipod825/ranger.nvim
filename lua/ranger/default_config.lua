@@ -24,6 +24,12 @@ return {
 			dd = action.transfer.cut_current,
 			d = action.transfer.cut_selected,
 			y = action.transfer.copy_selected,
+			yy = action.transfer.copy_current,
+			p = action.transfer.paste,
+			x = action.trash.trash_selected,
+			xx = action.trash.trash_current,
+			u = action.trash.restore_last,
+			i = action.rename,
 		},
 		v = {
 			v = action.transfer.toggle_select,

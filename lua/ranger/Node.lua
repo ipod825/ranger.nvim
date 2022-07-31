@@ -68,6 +68,7 @@ end
 
 function M:remove_all_children()
 	for _, c in ipairs(self.children) do
+		c:remove_all_children()
 		c.invalid = true
 	end
 	self.children = List()
@@ -82,6 +83,7 @@ function M:sort()
 	self:mark_flatten_children_dirty()
 end
 
+-- todo flatten_children_with_self
 function M:_flatten_children_inner()
 	if not self._flatten_children then
 		self._flatten_children = List({ self })
