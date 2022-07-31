@@ -50,6 +50,15 @@ function M.rename()
 	local buffer = M.utils.get_cur_buffer_and_node()
 	buffer:edit({
 		get_items = function()
+			-- The result is the absolute path inferred by the node hierarchy
+			-- based on the current buffer content (instead of nodes' stored
+			-- absolute path). For e.g. having old and new on the left and right:
+			-- a     newa
+			--   b     newb
+			-- The result for the old would be:
+			--  {[0] = {'./a'}, [1] = {'./a/b'}}
+			-- And the result for the new would be:
+			--  {[0] = {'./newa'}, [1] = {'./newa/newb'}}
 			local res = {}
 			local lines = vim.api.nvim_buf_get_lines(buffer.id, 0, -1, true)
 			local nodes = buffer.root:flatten_children()
@@ -64,9 +73,8 @@ function M.rename()
 						stack:pop()
 						level_stack:pop()
 					end
-
 					stack:push(vim.trim(lines[i]))
-					level_stack:push(nodes[i].level)
+					level_stack:push(cur_level)
 					res[cur_level] = res[cur_level] or {}
 					table.insert(res[cur_level], path.join(unpack(stack)))
 				end
@@ -74,18 +82,28 @@ function M.rename()
 			return res
 		end,
 		update = function(ori_items, new_items)
-			require("libp.log").warn(ori_items)
-			require("libp.log").warn(new_items)
 			buffer:disable_fs_event_watcher()
-			for level = 0, #new_items do
+			-- We start from the bottom level because otherwise the source path
+			-- for bottom levels would become invalid when we rename the top
+			-- levels.
+			for level = #new_items, 0, -1 do
+				-- Rename in two steps to avoid the case that the target name is in the same directory. For e.g.:
+				-- `mv a b; mv b a` would not swap a and b. Instead, we should do:
+				-- `mv a atmp; mv b btmp; mv atmp b; mv btmp a`.
 				for _, ori_item in ipairs(ori_items[level]) do
-					require("libp.log").warn(ori_item, ori_item .. "copy")
 					a.uv.fs_rename(ori_item, ori_item .. "copy")
 				end
 
+				-- For the target name, we don't use new_item directly as its
+				-- directory name was inferred from the buffer lines while its
+				-- ancestor nodes might also got renamed. In such case, the
+				-- directory name is invalid at the point when we try to rename
+				-- the new_item as we rename from bottom levels to top levels.
 				for i, new_item in ipairs(new_items[level]) do
-					require("libp.log").warn(ori_items[level][i] .. "copy", new_item)
-					a.uv.fs_rename(ori_items[level][i] .. "copy", new_item)
+					a.uv.fs_rename(
+						ori_items[level][i] .. "copy",
+						path.join(path.dirname(ori_items[level][i]), path.basename(new_item))
+					)
 				end
 			end
 			buffer:enable_fs_event_watcher()

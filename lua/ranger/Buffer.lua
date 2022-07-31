@@ -91,7 +91,7 @@ end
 function M:_add_dir_node_children(node, abspath)
 	abspath = abspath or node.abspath
 
-	node:extend_children(List(fs.list_dir2(abspath)):map(function(e)
+	node:extend_children(List(fs.list_dir(abspath)):map(function(e)
 		e.abspath = path.join(abspath, e.name)
 		return Node(e)
 	end))
