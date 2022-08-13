@@ -6,16 +6,19 @@ local Set = require("libp.datatype.Set")
 local Job = require("libp.Job")
 
 local gio_available = vim.fn.executable("gio")
+if gio_available then
+	Job({ cmd = "gio trash --empty" }):start():wait()
+end
 
 local trash_cmd = function(abspath)
-	return gio_available and vim.split("gio trash " .. abspath, " ") or { "rm", abspath }
+	return gio_available and ('gio trash "%s"'):format(abspath) or ('rm "%s"'):format(abspath)
 end
 
 M._history = {}
 
 function M.trash_current()
 	local buffer, node = utils.get_cur_buffer_and_node()
-	local code = Job({ cmds = trash_cmd(node.abspath) }):start()
+	local code = Job({ cmd = trash_cmd(node.abspath) }):start()
 	if code == 0 then
 		table.insert(M._history, { node.abspath })
 	end
@@ -62,7 +65,7 @@ function M.restore_last()
 	end
 	restore_paths = Set(restore_paths)
 
-	local lines = Job({ cmds = { "gio", "trash", "--list" } }):stdoutput()
+	local lines = Job({ cmd = { "gio", "trash", "--list" } }):stdoutput()
 	local file_version = {}
 	for abspath in Set.values(restore_paths) do
 		file_version[abspath] = 1

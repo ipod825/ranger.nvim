@@ -7,6 +7,7 @@ local vimfn = require("libp.utils.vimfn")
 local path = require("libp.path")
 local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
+local itt = require("libp.datatype.itertools")
 local a = require("plenary.async")
 
 function M.open_or_new(buf_opts)
@@ -49,7 +50,6 @@ function M.open(dir_name, opts)
 			dir_name = rel_dir_name
 		end
 	end
-	require("libp.log").warn(dir_name)
 
 	if vim.fn.isdirectory(dir_name) ~= 1 then
 		vim.notify(("%s is not a directory"):format(ori_dir_name), vim.log.levels.WARN)
@@ -94,10 +94,16 @@ end
 function M:_add_dir_node_children(node, abspath)
 	abspath = abspath or node.abspath
 
-	node:extend_children(List(fs.list_dir(abspath)):map(function(e)
+	local entries, err = fs.list_dir(abspath):map(function(e)
 		e.abspath = path.join(abspath, e.name)
 		return Node(e)
-	end))
+	end)
+	if err then
+		vimfn.warn(err)
+		return
+	end
+
+	node:extend_children(entries)
 
 	for _, child in ipairs(node:flatten_children()) do
 		-- Recursively add children to expanded nodes.
@@ -124,10 +130,11 @@ function M:reload()
 	self:SUPER():reload()
 	self:clear_hl(1, -1)
 
-	self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
-	self.root:flatten_children():for_each(function(_, row)
+	local total_lines = vim.api.nvim_buf_line_count(self.id)
+	self.cur_row = math.min(self.cur_row, total_lines)
+	for row in itt.range(total_lines) do
 		self:set_row_hl(row, self.cur_row)
-	end)
+	end
 end
 
 -- Set content and highlight assuming the nodes (from which the content were
@@ -136,6 +143,8 @@ function M:draw()
 	local editable_width = vimfn.editable_width(0)
 	self.content = self.root:flatten_children():map(function(e)
 		local res = (" "):rep(e.level * 2) .. e.name
+		-- local top_level = e.level == 0
+		-- local res = ("%s%s"):format(top_level and "" or ("│ "):rep(e.level * 2), e.name)
 		res = res .. (" "):rep(math.max(0, editable_width - vim.fn.strwidth(res)))
 		return res
 	end)

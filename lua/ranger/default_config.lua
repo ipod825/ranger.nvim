@@ -5,6 +5,7 @@ return {
 	command = "Ranger",
 	-- open_cmd = "edit",
 	open_cmd = "Tabdrop",
+	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
 	highlights = {
 		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },

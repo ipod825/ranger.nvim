@@ -1,5 +1,6 @@
 local M = require("libp.datatype.Class"):EXTEND()
 local List = require("libp.datatype.List")
+local values = require("libp.datatype.itertools").values
 
 function M.cmp(a, b)
 	if a.sorting_order ~= b.sorting_order then
@@ -58,10 +59,10 @@ function M:add_child(child)
 end
 
 function M:extend_children(new_children)
-	new_children:for_each(function(c)
+	for c in values(new_children) do
 		c.parent = self
 		c.level = self.level + 1
-	end)
+	end
 	self.children:extend(new_children)
 	self:mark_flatten_children_dirty()
 end

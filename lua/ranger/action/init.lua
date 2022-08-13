@@ -3,11 +3,20 @@ local M = {
 	transfer = require("ranger.action.transfer"),
 	trash = require("ranger.action.trash"),
 }
+local Rifle = require("ranger.action.Rifle")
 local Buffer = require("ranger.Buffer")
 local vimfn = require("libp.utils.vimfn")
 local path = require("libp.path")
 local Stack = require("libp.datatype.Stack")
+local Job = require("libp.Job")
+local uv = require("libp.fs.uv")
 local a = require("plenary.async")
+
+local rifle
+function M.setup(opts)
+	vim.validate({ rifle_path = { opts.rifle_path, "s" } })
+	rifle = Rifle(opts.rifle_path)
+end
 
 function M.toggle_expand()
 	local buffer, node = M.utils.get_cur_buffer_and_node()
@@ -42,7 +51,12 @@ function M.open(open_cmd)
 	elseif node.type == "directory" then
 		Buffer.open(node.abspath, { open_cmd = open_cmd })
 	else
-		vim.cmd(("%s %s"):format(open_cmd, node.abspath))
+		local command = rifle:decide_open_cmd(node.abspath)
+		if command then
+			Job({ cmd = command:format(node.abspath), detached = true }):start()
+		else
+			vim.cmd(("%s %s"):format(open_cmd, node.abspath))
+		end
 	end
 end
 
@@ -91,7 +105,7 @@ function M.rename()
 				-- `mv a b; mv b a` would not swap a and b. Instead, we should do:
 				-- `mv a atmp; mv b btmp; mv atmp b; mv btmp a`.
 				for _, ori_item in ipairs(ori_items[level]) do
-					a.uv.fs_rename(ori_item, ori_item .. "copy")
+					uv.fs_rename(ori_item, ori_item .. "copy")
 				end
 
 				-- For the target name, we don't use new_item directly as its
@@ -100,7 +114,7 @@ function M.rename()
 				-- directory name is invalid at the point when we try to rename
 				-- the new_item as we rename from bottom levels to top levels.
 				for i, new_item in ipairs(new_items[level]) do
-					a.uv.fs_rename(
+					uv.fs_rename(
 						ori_items[level][i] .. "copy",
 						path.join(path.dirname(ori_items[level][i]), path.basename(new_item))
 					)

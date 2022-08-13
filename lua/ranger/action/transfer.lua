@@ -4,6 +4,7 @@ local vimfn = require("libp.utils.vimfn")
 local Set = require("libp.datatype.Set")
 local path = require("libp.path")
 local a = require("plenary.async")
+local uv = require("libp.fs.uv")
 local fs = require("libp.fs")
 local NodeStateController = require("ranger.NodeStateController")
 
@@ -179,7 +180,7 @@ function M.paste()
 	for buffer, controller, node in M.cut_nodes() do
 		buffer:disable_fs_event_watcher()
 		if node then
-			local err = a.uv.fs_rename(node.abspath, path.join(cur_buffer.directory, node.name))
+			local _, err = uv.fs_rename(node.abspath, path.join(cur_buffer.directory, node.name))
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)

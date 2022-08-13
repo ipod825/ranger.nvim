@@ -10,6 +10,7 @@ function M.setup(opts)
 		command = { opts.command, "s", true },
 	})
 
+	require("ranger.action").setup(opts)
 	M.define_command(opts)
 	M.define_highlights(opts.highlights)
 	Buffer.define_buf_win_enter_autocmd()
