@@ -162,7 +162,7 @@ function M.paste()
 	local errors = {}
 	for buffer, controller, node in M.copied_nodes() do
 		if node then
-			local err =
+			local _, err =
 				fs.copy(node.abspath, path.join(cur_buffer.directory, node.name), { excl = true, ficlone = true })
 			a.util.scheduler()
 			if err then
@@ -172,7 +172,7 @@ function M.paste()
 		else
 			maybe_recycle_managed_buffers(buffer, State.COPIED)
 			if buffer ~= cur_buffer then
-				buffer:redraw()
+				buffer:draw()
 			end
 		end
 	end

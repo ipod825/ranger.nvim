@@ -7,7 +7,7 @@ local Job = require("libp.Job")
 
 local gio_available = vim.fn.executable("gio")
 if gio_available then
-	Job({ cmd = "gio trash --empty" }):start():wait()
+	Job({ cmd = "gio trash --empty" }):start()
 end
 
 local trash_cmd = function(abspath)

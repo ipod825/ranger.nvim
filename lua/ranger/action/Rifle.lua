@@ -14,22 +14,31 @@ function M.Rule(fn, ...)
 	end
 end
 
+local Rule = require("libp.datatype.Class"):EXTEND()
+
+function Rule:init(...)
+	self.args = { ... }
+end
+
 M.rules = {}
-function M.register_rule(rule_name, fn)
-	M.rules[rule_name] = fn
-end
 
-function M.has(name)
-	return osfn.is_in_path(name)
-end
+M.has = Rule:EXTEND({
+	__call = function(this)
+		return osfn.is_in_path(this.args[1])
+	end,
+})
 
-function M.isdir(name)
-	return fs.is_directory(name)
-end
+M.ext = Rule:EXTEND({
+	__call = function(this, fname)
+		return vim.endswith(fname, "." .. this.args[1])
+	end,
+})
 
-function M.ext(extension, name)
-	return vim.endswith(name, "." .. extension)
-end
+M.isdir = Rule:EXTEND({
+	__call = function(_, fname)
+		return fs.is_directory(fname)
+	end,
+})
 
 function M:init(config_file)
 	vim.validate({ config_file = { config_file, "s" } })
@@ -41,7 +50,7 @@ function M:init(config_file)
 		end
 	end
 
-	self.rules = {}
+	self.rules = List()
 	local i = 0
 	for line in io.lines(config_file) do
 		i = i + 1
@@ -56,49 +65,55 @@ function M:init(config_file)
 				)
 			end
 
-			local conditions, command = sp[1], sp[2]
+			local tests = List()
+			for test in itt.values(vim.split(sp[1], ",")) do
+				local test_sp = List(vim.split(test, " ")):filter(function(e)
+					return #e > 0
+				end)
+				tests:append(M[test_sp[1]](unpack(vim.list_slice(test_sp, 2))))
+			end
+
+			local command = sp[2]
 			-- Simple case, user specify only the command. For sophisicated
 			-- command like bash -c "command %s" user should add '%s' themselves
 			if not command:match("%%s") then
 				command = command .. ' "%s"'
 			end
 
-			local condition_fns = List(vim.split(conditions, ",")):map(function(condition_str)
-				local condition_sp = List(vim.split(condition_str, " ")):filter(function(e)
-					return #e > 0
-				end)
-				return function(path)
-					return M[condition_sp[1]](unpack(vim.list_slice(condition_sp, 2, #condition_sp)), path)
-				end
-			end)
-			table.insert(self.rules, {
-				condition = function(path)
-					for condition_fn in itt.values(condition_fns) do
-						if not condition_fn(path) then
-							return false
-						end
-						return true
-					end
-				end,
-				command = command,
-			})
+			self.rules:append({ tests, command })
 		end
 	end
 end
 
 function M:decide_open_cmd(path)
-	for _, rule in ipairs(self.rules) do
-		if rule.condition(path) then
-			return rule.command
+	for rule in itt.values(self.rules) do
+		local succ = true
+		local tests, command = unpack(rule)
+		for test in itt.values(tests) do
+			if not test(path) then
+				succ = false
+				break
+			end
+			if succ then
+				return command:format(path)
+			end
 		end
 	end
 end
 
 function M:list_available_cmd(path)
-	local res = {}
-	for _, rule in ipairs(self.rules) do
-		if rule.condition(path) then
-			table.insert(res, rule.command)
+	local res = List()
+	for rule in itt.values(self.rules) do
+		local succ = true
+		local tests, command = unpack(rule)
+		for test in itt.values(tests) do
+			if not test(path) then
+				succ = false
+				break
+			end
+		end
+		if succ then
+			res:append(command)
 		end
 	end
 	return res

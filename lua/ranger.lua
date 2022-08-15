@@ -25,7 +25,11 @@ end
 function M.define_highlights(highlights)
 	for group, color in pairs(highlights) do
 		vim.api.nvim_set_hl(0, group, color)
-		vim.api.nvim_set_hl(0, group .. "Sel", vim.tbl_extend("force", color, { fg = "black", bg = color.fg }))
+		if group == "RangerHeader" then
+			vim.api.nvim_set_hl(0, group .. "Sel", color)
+		else
+			vim.api.nvim_set_hl(0, group .. "Sel", vim.tbl_extend("force", color, { fg = "black", bg = color.fg }))
+		end
 	end
 end
 

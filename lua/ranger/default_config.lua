@@ -11,7 +11,7 @@ return {
 		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerCut = { ctermfg = "grey", fg = "#808080" },
 		RangerCopied = { ctermfg = 13, fg = "#ff00ff" },
-		RangerDir = { ctermfg = 26, fg = "#005fd7" },
+		RangerDir = { ctermfg = 26, fg = "#3e91f7" },
 		RangerFile = { ctermfg = "white", fg = "#ffffff" },
 		RangerLink = { ctermfg = 51, fg = "#00ffff" },
 		RangerExe = { ctermfg = 22, fg = "#005f00" },

@@ -2,6 +2,7 @@ local M = {
 	utils = require("ranger.action.utils"),
 	transfer = require("ranger.action.transfer"),
 	trash = require("ranger.action.trash"),
+	preview = require("ranger.action.preview"),
 }
 local Rifle = require("ranger.action.Rifle")
 local Buffer = require("ranger.Buffer")
@@ -10,7 +11,6 @@ local path = require("libp.path")
 local Stack = require("libp.datatype.Stack")
 local Job = require("libp.Job")
 local uv = require("libp.fs.uv")
-local a = require("plenary.async")
 
 local rifle
 function M.setup(opts)
@@ -53,7 +53,7 @@ function M.open(open_cmd)
 	else
 		local command = rifle:decide_open_cmd(node.abspath)
 		if command then
-			Job({ cmd = command:format(node.abspath), detached = true }):start()
+			Job({ cmd = command, detached = true }):start()
 		else
 			vim.cmd(("%s %s"):format(open_cmd, node.abspath))
 		end

@@ -8,6 +8,7 @@ local path = require("libp.path")
 local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
+local abbrev_name = require("ranger.abbrev_name")
 local a = require("plenary.async")
 
 function M.open_or_new(buf_opts)
@@ -75,7 +76,10 @@ function M.open(dir_name, opts)
 	}
 
 	local buffer, new
-	if #buf_opts.open_cmd == 0 then
+	if buf_opts.open_cmd == "preview" then
+		-- Caller will render itself.
+		buffer, new = M.get_or_new(buf_opts)
+	elseif #buf_opts.open_cmd == 0 then
 		buffer, new = M.get_or_new(buf_opts)
 		local grid = ui.Grid()
 		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
@@ -141,11 +145,11 @@ end
 -- based on) were built.
 function M:draw()
 	local editable_width = vimfn.editable_width(0)
+	editable_width = 40
 	self.content = self.root:flatten_children():map(function(e)
 		local res = (" "):rep(e.level * 2) .. e.name
-		-- local top_level = e.level == 0
-		-- local res = ("%s%s"):format(top_level and "" or ("│ "):rep(e.level * 2), e.name)
-		res = res .. (" "):rep(math.max(0, editable_width - vim.fn.strwidth(res)))
+		-- res = res .. (" "):rep(math.max(0, editable_width - vim.fn.strwidth(res)))
+		res = abbrev_name(res, editable_width)
 		return res
 	end)
 	self:reload()
@@ -255,6 +259,8 @@ function M:_config_new(dir_name)
 			self:set_row_hl(self.cur_row)
 			self:set_row_hl(new_row)
 			self.cur_row = new_row
+
+			require("ranger.action").preview()
 		end,
 	})
 end
