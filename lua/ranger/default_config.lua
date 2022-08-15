@@ -3,6 +3,8 @@ local action = require("ranger.action")
 return {
 	-- The command name ranger defined.
 	command = "Ranger",
+	hijack_netrw = false,
+	autochdir = true,
 	-- open_cmd = "edit",
 	open_cmd = "Tabdrop",
 	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",

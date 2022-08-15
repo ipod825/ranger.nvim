@@ -36,6 +36,7 @@ function M.define_buf_win_enter_autocmd()
 			vim.wo.foldenable = false
 			vim.foldmethod = "manual"
 			vim.list = false
+			vim.cmd("lcd " .. M.get_current_buffer().directory:gsub(" ", "\\ "))
 		end,
 	})
 end

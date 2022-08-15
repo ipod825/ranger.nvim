@@ -31,7 +31,6 @@ function M.preview()
 			preview_buffer = Buffer.open(node.abspath, { open_cmd = "preview" })
 		elseif node.type == "file" then
 			local mime_str = mime.info(node.abspath)
-			require("libp.log").warn(mime_str)
 			if mime_str:match("text") then
 				preview_buffer = ui.FilePreviewBuffer(node.abspath)
 				-- TODO(remove version check when nvim version stable)

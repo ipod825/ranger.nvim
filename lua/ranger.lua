@@ -1,6 +1,7 @@
 local M = {}
 local a = require("plenary.async")
 local default_config = require("ranger.default_config")
+local fs = require("libp.fs")
 local Buffer = require("ranger.Buffer")
 
 function M.setup(opts)
@@ -9,6 +10,27 @@ function M.setup(opts)
 	vim.validate({
 		command = { opts.command, "s", true },
 	})
+
+	if opts.hijack_netrw then
+		vim.g.loaded_netrw = 1
+		vim.g.loaded_netrwPlugin = 1
+
+		vim.api.nvim_create_autocmd("BufEnter", {
+			pattern = "*",
+			group = vim.api.nvim_create_augroup("ranger_hijack_netrw", {}),
+			callback = function(args)
+				if fs.is_directory(args.file) then
+					a.void(function()
+						local ori_buf = vim.api.nvim_get_current_buf()
+						local _, new = Buffer.open(args.file)
+						if new and vim.api.nvim_buf_get_name(ori_buf) == args.file then
+							vim.cmd("bwipe " .. ori_buf)
+						end
+					end)()
+				end
+			end,
+		})
+	end
 
 	require("ranger.action").setup(opts)
 	M.define_command(opts)
