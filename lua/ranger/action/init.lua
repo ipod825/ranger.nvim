@@ -24,6 +24,18 @@ function M.toggle_expand()
 	buffer:toggle_expand_node(node)
 end
 
+function M.toggle_hidden()
+	require("libp.log").warn("in")
+	local buffer = M.utils.get_cur_buffer_and_node()
+	if buffer.back_ignore_patterns then
+		buffer.ignore_patterns, buffer.back_ignore_patterns = buffer.back_ignore_patterns, nil
+	else
+		buffer.ignore_patterns, buffer.back_ignore_patterns = {}, buffer.ignore_patterns
+	end
+	buffer:rebuild_nodes()
+	buffer:draw()
+end
+
 function M.goto_parent()
 	local buffer = M.utils.get_cur_buffer_and_node()
 	if path.dirname(buffer.directory) == buffer.directory then

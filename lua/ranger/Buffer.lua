@@ -8,6 +8,7 @@ local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
 local abbrev = require("ranger.abbrev")
+local VIter = require("libp.datatype.VIter")
 local a = require("plenary.async")
 
 function M.open_or_new(buf_opts)
@@ -22,7 +23,7 @@ function M.get_current_buffer()
 	return ui.Buffer.get_current_buffer()
 end
 
-function M.set_win_options()
+function M:set_win_options()
 	vim.wo.scrolloff = 0
 	vim.wo.sidescrolloff = 0
 	vim.wo.wrap = false
@@ -32,15 +33,14 @@ function M.set_win_options()
 	vim.wo.foldenable = false
 	vim.foldmethod = "manual"
 	vim.list = false
+	require("libp.log").warn(self.directory)
+	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
 end
 
 function M.define_buf_win_enter_autocmd()
 	vim.api.nvim_create_autocmd("BufWinEnter", {
 		pattern = "ranger://*",
-		callback = function()
-			M.set_win_options()
-			vim.cmd("lcd " .. M.get_current_buffer().directory:gsub(" ", "\\ "))
-		end,
+		callback = function() end,
 	})
 end
 
@@ -100,11 +100,9 @@ function M.open(dir_name, opts)
 		local grid = ui.Grid()
 		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
 		grid:show()
-		M.set_win_options()
 	else
 		local ori_buf = vim.api.nvim_get_current_buf()
 		buffer, new = M.open_or_new(buf_opts)
-		M.set_win_options()
 		-- Wipe the temporary buffer created by netrw.
 		if new and vim.api.nvim_buf_get_name(ori_buf) == dir_name then
 			vim.cmd("bwipe " .. ori_buf)
@@ -119,20 +117,35 @@ function M.open(dir_name, opts)
 		opts.win_width = opts.win_width or vimfn.editable_width(0)
 		buffer:set_win_width_maybe_redraw(opts.win_width)
 	end
+	if M.get_current_buffer() == buffer then
+		buffer:set_win_options()
+	end
 	return buffer, new
 end
 
 function M:_add_dir_node_children(node, abspath)
 	abspath = abspath or node.abspath
 
-	local entries, err = fs.list_dir(abspath):map(function(e)
-		e.abspath = path.join(abspath, e.name)
-		return Node(e)
-	end)
+	local entries, err = fs.list_dir(abspath)
 	if err then
 		vimfn.warn(err)
 		return
 	end
+
+	entries = VIter(entries)
+		:filter(function(e)
+			for pattern in itt.values(self.ignore_patterns) do
+				if e.name:match(pattern) then
+					return false
+				end
+			end
+			return true
+		end)
+		:map(function(e)
+			e.abspath = path.join(abspath, e.name)
+			return Node(e)
+		end)
+		:collect()
 
 	node:extend_children(entries)
 
@@ -267,6 +280,7 @@ end
 
 function M:_config_new(dir_name, opts)
 	self.win_width = opts.win_width
+	self.ignore_patterns = vim.deepcopy(opts.ignore_patterns)
 	self.cur_row = 1
 	self.directory = dir_name
 	self.expanded_abspaths = Set()
