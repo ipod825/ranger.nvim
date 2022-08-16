@@ -20,13 +20,7 @@ function M.setup(opts)
 			group = vim.api.nvim_create_augroup("ranger_hijack_netrw", {}),
 			callback = function(args)
 				if fs.is_directory(args.file) then
-					a.void(function()
-						local ori_buf = vim.api.nvim_get_current_buf()
-						local _, new = Buffer.open(args.file)
-						if new and vim.api.nvim_buf_get_name(ori_buf) == args.file then
-							vim.cmd("bwipe " .. ori_buf)
-						end
-					end)()
+					vim.cmd(("%s %s"):format(opts.command, args.file))
 				end
 			end,
 		})
@@ -34,18 +28,22 @@ function M.setup(opts)
 
 	require("ranger.action").setup(opts)
 	M.define_command(opts)
-	M.define_highlights(opts.highlights)
+	M.define_highlights(opts)
 	Buffer.define_buf_win_enter_autocmd()
 	vim.api.nvim_create_autocmd("ColorScheme", {
 		group = vim.api.nvim_create_augroup("ranger_define_highlight", {}),
 		callback = function()
-			M.define_highlights(opts.highlights)
+			M.define_highlights(opts)
 		end,
 	})
 end
 
-function M.define_highlights(highlights)
-	for group, color in pairs(highlights) do
+function M.define_highlights(opts)
+	for group, color in pairs(opts.highlights) do
+		vim.api.nvim_set_hl(0, group, color)
+	end
+
+	for group, color in pairs(opts.node_highlights) do
 		vim.api.nvim_set_hl(0, group, color)
 		if group == "RangerHeader" then
 			vim.api.nvim_set_hl(0, group .. "Sel", color)

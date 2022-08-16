@@ -5,10 +5,15 @@ return {
 	command = "Ranger",
 	hijack_netrw = false,
 	autochdir = true,
+	preview_panel_width = 0.3,
+	preview_default_on = true,
 	-- open_cmd = "edit",
 	open_cmd = "Tabdrop",
 	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
 	highlights = {
+		RangerPreviewBorder = { link = "NonText" },
+	},
+	node_highlights = {
 		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerCut = { ctermfg = "grey", fg = "#808080" },
@@ -33,6 +38,7 @@ return {
 			DD = action.trash.trash_current,
 			u = action.trash.restore_last,
 			i = action.rename,
+			P = action.preview.toggle,
 		},
 		v = {
 			v = action.transfer.toggle_select,

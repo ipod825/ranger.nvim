@@ -1,14 +1,13 @@
 local M = require("libp.ui.Buffer"):EXTEND()
 local ui = require("libp.ui")
 local Node = require("ranger.Node")
-local List = require("libp.datatype.List")
 local Watcher = require("libp.fs.Watcher")
 local vimfn = require("libp.utils.vimfn")
 local path = require("libp.path")
 local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
-local abbrev_name = require("ranger.abbrev_name")
+local abbrev = require("ranger.abbrev")
 local a = require("plenary.async")
 
 function M.open_or_new(buf_opts)
@@ -23,22 +22,38 @@ function M.get_current_buffer()
 	return ui.Buffer.get_current_buffer()
 end
 
+function M.set_win_options()
+	vim.wo.scrolloff = 0
+	vim.wo.sidescrolloff = 0
+	vim.wo.wrap = false
+	vim.wo.spell = false
+	vim.wo.cursorline = false
+	vim.wo.foldcolumn = "0"
+	vim.wo.foldenable = false
+	vim.foldmethod = "manual"
+	vim.list = false
+end
+
 function M.define_buf_win_enter_autocmd()
 	vim.api.nvim_create_autocmd("BufWinEnter", {
 		pattern = "ranger://*",
 		callback = function()
-			vim.wo.scrolloff = 0
-			vim.wo.sidescrolloff = 0
-			vim.wo.wrap = false
-			vim.wo.spell = false
-			vim.wo.cursorline = false
-			vim.wo.foldcolumn = "0"
-			vim.wo.foldenable = false
-			vim.foldmethod = "manual"
-			vim.list = false
+			M.set_win_options()
 			vim.cmd("lcd " .. M.get_current_buffer().directory:gsub(" ", "\\ "))
 		end,
 	})
+end
+
+local init_win_width = vimfn.editable_width(0)
+function M.set_init_win_width(width)
+	init_win_width = width
+end
+
+function M:set_win_width_maybe_redraw(win_width)
+	if self.win_width ~= win_width then
+		self.win_width = win_width
+		self:draw()
+	end
 end
 
 function M.open(dir_name, opts)
@@ -85,13 +100,24 @@ function M.open(dir_name, opts)
 		local grid = ui.Grid()
 		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
 		grid:show()
+		M.set_win_options()
 	else
+		local ori_buf = vim.api.nvim_get_current_buf()
 		buffer, new = M.open_or_new(buf_opts)
+		M.set_win_options()
+		-- Wipe the temporary buffer created by netrw.
+		if new and vim.api.nvim_buf_get_name(ori_buf) == dir_name then
+			vim.cmd("bwipe " .. ori_buf)
+		end
 	end
 
 	if new then
-		buffer:_config_new(dir_name)
+		opts.win_width = opts.win_width or init_win_width
+		buffer:_config_new(dir_name, opts)
 		buffer:set_mappings(opts.mappings)
+	else
+		opts.win_width = opts.win_width or vimfn.editable_width(0)
+		buffer:set_win_width_maybe_redraw(opts.win_width)
 	end
 	return buffer, new
 end
@@ -145,13 +171,12 @@ end
 -- Set content and highlight assuming the nodes (from which the content were
 -- based on) were built.
 function M:draw()
-	local editable_width = vimfn.editable_width(0)
-	editable_width = 40
 	self.content = self.root:flatten_children():map(function(e)
-		local res = (" "):rep(e.level * 2) .. e.name
-		-- res = res .. (" "):rep(math.max(0, editable_width - vim.fn.strwidth(res)))
-		res = abbrev_name(res, editable_width)
-		return res
+		if e.type == "header" then
+			return abbrev.path((" "):rep(e.level * 2) .. e.name, self.win_width)
+		else
+			return abbrev.name((" "):rep(e.level * 2) .. e.name, self.win_width)
+		end
 	end)
 	self:reload()
 end
@@ -240,7 +265,8 @@ function M:_remove_rebuild_fs_watcher(directory)
 	self._build_and_draw_watchers[directory] = nil
 end
 
-function M:_config_new(dir_name)
+function M:_config_new(dir_name, opts)
+	self.win_width = opts.win_width
 	self.cur_row = 1
 	self.directory = dir_name
 	self.expanded_abspaths = Set()

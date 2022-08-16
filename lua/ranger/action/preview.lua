@@ -7,6 +7,22 @@ local itt = require("libp.datatype.itertools")
 local mime = require("libp.mime")
 local a = require("plenary.async")
 
+local panel_width
+local preview_width
+local is_previewing
+
+function M.setup(opts)
+	local editable_width = vimfn.editable_width(0)
+	panel_width = opts.preview_panel_width > 1 and opts.preview_panel_width
+		or math.floor(editable_width * opts.preview_panel_width)
+	-- -1 for border
+	preview_width = editable_width - panel_width - 1
+	is_previewing = opts.preview_default_on
+	if is_previewing then
+		Buffer.set_init_win_width(panel_width)
+	end
+end
+
 function M.close_all_preview_windows_in_current_tabpage()
 	for w in itt.values(vim.api.nvim_tabpage_list_wins(0)) do
 		if vimfn.win_get_var(w, "ranger_preview") then
@@ -15,9 +31,24 @@ function M.close_all_preview_windows_in_current_tabpage()
 	end
 end
 
+function M.toggle()
+	is_previewing = not is_previewing
+	local buffer = utils.get_cur_buffer_and_node()
+	if is_previewing then
+		M.preview()
+	else
+		M.close_all_preview_windows_in_current_tabpage()
+		buffer:set_win_width_maybe_redraw(vimfn.editable_width(0))
+	end
+end
+
 function M.preview()
+	if not is_previewing then
+		return
+	end
 	local buffer, node = utils.get_cur_buffer_and_node()
 	local ori_row = vimfn.current_row()
+	buffer:set_win_width_maybe_redraw(panel_width)
 	a.void(function()
 		a.util.sleep(30)
 		if vimfn.current_row() ~= ori_row then
@@ -25,14 +56,13 @@ function M.preview()
 		end
 		local preview_buffer
 		if node.type == "header" then
-			M.close_all_preview_windows_in_current_tabpage()
-			return
+			preview_buffer = ui.Buffer()
 		elseif node.type == "directory" then
-			preview_buffer = Buffer.open(node.abspath, { open_cmd = "preview" })
+			preview_buffer = Buffer.open(node.abspath, { open_cmd = "preview", win_width = preview_width })
 		elseif node.type == "file" then
 			local mime_str = mime.info(node.abspath)
-			if mime_str:match("text") then
-				preview_buffer = ui.FilePreviewBuffer(node.abspath)
+			if mime_str:match("text") or mime_str:match("x-empty") then
+				preview_buffer = ui.FileBuffer(node.abspath)
 				-- TODO(remove version check when nvim version stable)
 				if vim.version().minor <= 7 then
 					vim.filetype.match(node.abspath, preview_buffer.id)
@@ -47,14 +77,14 @@ function M.preview()
 
 		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.current_row() == ori_row then
 			M.close_all_preview_windows_in_current_tabpage()
-			local grid = ui.Grid({ relative = "win" })
+			local grid = ui.Grid({ relative = "win", focusable = true })
 			local row = grid:add_row()
-			row:add_column({ width = 40 })
+			row:add_column({ width = panel_width })
 			row:add_column():fill_window(
 				ui.BorderedWindow(
 					preview_buffer,
 					{ wo = { wrap = true }, w = { ranger_preview = true } },
-					{ border = { nil, nil, nil, nil, nil, nil, nil, "│" } }
+					{ highlight = "RangerPreviewBorder", border = { nil, nil, nil, nil, nil, nil, nil, "│" } }
 				)
 			)
 			-- Not sure why BufEnter is even triggered. But that leads to ranger

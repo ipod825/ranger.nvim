@@ -16,6 +16,7 @@ local rifle
 function M.setup(opts)
 	vim.validate({ rifle_path = { opts.rifle_path, "s" } })
 	rifle = Rifle(opts.rifle_path)
+	M.preview.setup(opts)
 end
 
 function M.toggle_expand()
