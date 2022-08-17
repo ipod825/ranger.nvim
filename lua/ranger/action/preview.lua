@@ -5,14 +5,17 @@ local vimfn = require("libp.utils.vimfn")
 local ui = require("libp.ui")
 local itt = require("libp.datatype.itertools")
 local mime = require("libp.mime")
+local Set = require("libp.datatype.Set")
 local a = require("plenary.async")
 
 local panel_width
 local preview_width
 local is_previewing
+local floating_preview
 
 function M.setup(opts)
 	local editable_width = vimfn.editable_width(0)
+	floating_preview = opts.floating_preview
 	panel_width = opts.preview_panel_width > 1 and opts.preview_panel_width
 		or math.floor(editable_width * opts.preview_panel_width)
 	-- -1 for border
@@ -25,7 +28,16 @@ end
 
 function M.close_all_preview_windows_in_current_tabpage()
 	for w in itt.values(vim.api.nvim_tabpage_list_wins(0)) do
-		if vimfn.win_get_var(w, "ranger_preview") then
+		if vimfn.win_get_var(w, "ranger_previewer") then
+			vim.api.nvim_win_close(w, true)
+		end
+	end
+end
+
+function M.close_all_invalid_preview_windows_in_current_tabpage()
+	for w in itt.values(vim.api.nvim_tabpage_list_wins(0)) do
+		local ranger_previewer = vimfn.win_get_var(w, "ranger_previewer")
+		if ranger_previewer and not vim.api.nvim_win_is_valid(ranger_previewer) then
 			vim.api.nvim_win_close(w, true)
 		end
 	end
@@ -46,6 +58,11 @@ function M.preview()
 	if not is_previewing then
 		return
 	end
+	local cur_win = vim.api.nvim_get_current_win()
+	if vimfn.win_get_var(cur_win, "ranger_previewer") then
+		return
+	end
+
 	local buffer, node = utils.get_cur_buffer_and_node()
 	local ori_row = vimfn.current_row()
 	buffer:set_win_width_maybe_redraw(panel_width)
@@ -77,22 +94,33 @@ function M.preview()
 
 		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.current_row() == ori_row then
 			M.close_all_preview_windows_in_current_tabpage()
-			local grid = ui.Grid({ relative = "win", focusable = true })
-			local row = grid:add_row()
-			row:add_column({ width = panel_width })
-			row:add_column():fill_window(
-				ui.BorderedWindow(
-					preview_buffer,
-					{ wo = { wrap = true }, w = { ranger_preview = true } },
-					{ highlight = "RangerPreviewBorder", border = { nil, nil, nil, nil, nil, nil, nil, "│" } }
+
+			if floating_preview then
+				local grid = ui.Grid({ relative = "win", focusable = true, noautocmd = true })
+				local row = grid:add_row()
+				row:add_column({ width = panel_width })
+				row:add_column():fill_window(
+					ui.BorderedWindow(
+						preview_buffer,
+						{ wo = { wrap = true }, w = { ranger_previewer = cur_win } },
+						{
+							highlight = "RangerFloatingPreviewBorder",
+							border = { nil, nil, nil, nil, nil, nil, nil, "│" },
+						}
+					)
 				)
-			)
-			-- Not sure why BufEnter is even triggered. But that leads to ranger
-			-- Buffer's CursorMoved handler to be called twice.
-			local ori_eventignore = vim.o.eventignore
-			vim.opt.eventignore:append("BufEnter")
-			grid:show()
-			vim.o.eventignore = ori_eventignore
+				grid:show()
+			else
+				vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
+				local preview_win = vim.api.nvim_get_current_win()
+				vim.api.nvim_win_set_buf(preview_win, preview_buffer.id)
+				vim.api.nvim_win_set_var(preview_win, "ranger_previewer", cur_win)
+
+				local ori_eventignore = vim.o.eventignore
+				vim.opt.eventignore:append("all")
+				vim.api.nvim_set_current_win(cur_win)
+				vim.o.eventignore = ori_eventignore
+			end
 		end
 	end)()
 end

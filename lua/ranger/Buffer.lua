@@ -36,13 +36,6 @@ function M:set_win_options()
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
 end
 
-function M.define_buf_win_enter_autocmd()
-	vim.api.nvim_create_autocmd("BufWinEnter", {
-		pattern = "ranger://*",
-		callback = function() end,
-	})
-end
-
 local init_win_width = vimfn.editable_width(0)
 function M.set_init_win_width(width)
 	init_win_width = width
@@ -76,7 +69,6 @@ function M.open(dir_name, opts)
 		dir_name = dir_name:sub(1, #dir_name - 1)
 	end
 	local buf_opts = {
-		-- TODO(smwang): abspath, expand home
 		filename = "ranger://" .. dir_name,
 		open_cmd = opts.open_cmd,
 		buf_enter_reload = false,
@@ -100,12 +92,7 @@ function M.open(dir_name, opts)
 		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
 		grid:show()
 	else
-		local ori_buf = vim.api.nvim_get_current_buf()
 		buffer, new = M.open_or_new(buf_opts)
-		-- Wipe the temporary buffer created by netrw.
-		if new and vim.api.nvim_buf_get_name(ori_buf) == dir_name then
-			vim.cmd("bwipe " .. ori_buf)
-		end
 	end
 
 	if new then
@@ -118,6 +105,13 @@ function M.open(dir_name, opts)
 	end
 	if M.get_current_buffer() == buffer then
 		buffer:set_win_options()
+		-- This puts the cursor on the row after the header (if possible). We
+		-- can't simply do this after _config_new as preview buffer might thus
+		-- be missed.
+		if not buffer._cur_row_init_reset then
+			vimfn.setrow(math.min(2, vim.api.nvim_buf_line_count(buffer.id)))
+			buffer._cur_row_init_reset = true
+		end
 	end
 	return buffer, new
 end

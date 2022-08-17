@@ -4,15 +4,17 @@ return {
 	-- The command name ranger defined.
 	command = "Ranger",
 	hijack_netrw = false,
-	-- open_cmd = "edit",
-	open_cmd = "Tabdrop",
+	open_cmd = "edit",
 	ignore_patterns = { "^%..*" },
 	autochdir = true,
 	preview_panel_width = 0.3,
 	preview_default_on = true,
+	-- Whether to use floating window for preview. This is not recommended as
+	-- normal window would be blocked by the floating window.
+	floating_preview = false,
 	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
 	highlights = {
-		RangerPreviewBorder = { link = "NonText" },
+		RangerFloatingPreviewBorder = { link = "NonText" },
 	},
 	node_highlights = {
 		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
@@ -28,6 +30,7 @@ return {
 		n = {
 			h = action.goto_parent,
 			l = action.open,
+			t = require("libp.functional").bind(action.open, "tabedit"),
 			za = action.toggle_expand,
 			zh = action.toggle_hidden,
 			v = action.transfer.toggle_select,

@@ -25,7 +25,6 @@ function M.toggle_expand()
 end
 
 function M.toggle_hidden()
-	require("libp.log").warn("in")
 	local buffer = M.utils.get_cur_buffer_and_node()
 	if buffer.back_ignore_patterns then
 		buffer.ignore_patterns, buffer.back_ignore_patterns = buffer.back_ignore_patterns, nil
@@ -69,6 +68,7 @@ function M.open(open_cmd)
 			Job({ cmd = command, detached = true }):start()
 		else
 			vim.cmd(("%s %s"):format(open_cmd, node.abspath))
+			M.preview.close_all_preview_windows_in_current_tabpage()
 		end
 	end
 end

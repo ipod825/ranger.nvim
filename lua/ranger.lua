@@ -29,7 +29,6 @@ function M.setup(opts)
 	require("ranger.action").setup(opts)
 	M.define_command(opts)
 	M.define_highlights(opts)
-	Buffer.define_buf_win_enter_autocmd()
 	vim.api.nvim_create_autocmd("ColorScheme", {
 		group = vim.api.nvim_create_augroup("ranger_define_highlight", {}),
 		callback = function()
