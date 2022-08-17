@@ -33,7 +33,6 @@ function M:set_win_options()
 	vim.wo.foldenable = false
 	vim.foldmethod = "manual"
 	vim.list = false
-	require("libp.log").warn(self.directory)
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
 end
 

@@ -6,7 +6,7 @@ return {
 	hijack_netrw = false,
 	-- open_cmd = "edit",
 	open_cmd = "Tabdrop",
-	ignore_patterns = { "%..*" },
+	ignore_patterns = { "^%..*" },
 	autochdir = true,
 	preview_panel_width = 0.3,
 	preview_default_on = true,
