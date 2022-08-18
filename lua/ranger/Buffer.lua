@@ -9,6 +9,7 @@ local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
 local abbrev = require("ranger.abbrev")
 local VIter = require("libp.datatype.VIter")
+local functional = require("libp.functional")
 local a = require("plenary.async")
 
 function M.open_or_new(buf_opts)
@@ -23,27 +24,32 @@ function M.get_current_buffer()
 	return ui.Buffer.get_current_buffer()
 end
 
-function M:set_win_options(w)
-	-- TODO(smwang): The API has bugs that sets the global values
-	-- vim.api.nvim_win_set_option(w, "scrolloff", 0)
-	-- vim.api.nvim_win_set_option(w, "sidescrolloff", 0)
-	-- vim.api.nvim_win_set_option(w, "wrap", false)
-	-- vim.api.nvim_win_set_option(w, "spell", false)
-	-- vim.api.nvim_win_set_option(w, "cursorline", false)
-	-- vim.api.nvim_win_set_option(w, "foldcolumn", "0")
-	-- vim.api.nvim_win_set_option(w, "foldenable", false)
-	-- vim.api.nvim_win_set_option(w, "foldmethod", "manual")
-	-- vim.api.nvim_win_set_option(w, "list", false)
-	vim.cmd("setlocal scrolloff=0")
-	vim.cmd("setlocal sidescrolloff=0")
-	vim.cmd("setlocal nowrap")
-	vim.cmd("setlocal nospell")
-	vim.cmd("setlocal nocursorline")
-	vim.cmd("setlocal foldcolumn=0")
-	vim.cmd("setlocal nofoldenable")
-	vim.cmd("setlocal foldmethod=manual")
-	vim.cmd("setlocal nolist")
+function M:_on_open_focused()
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
+	if not self._ever_open_focused then
+		self._ever_open_focused = true
+		-- Puts the cursor on the row after the header.
+		vimfn.setrow(2)
+		-- TODO(smwang): The API has bugs that sets the global values
+		-- vim.api.nvim_win_set_option(w, "scrolloff", 0)
+		-- vim.api.nvim_win_set_option(w, "sidescrolloff", 0)
+		-- vim.api.nvim_win_set_option(w, "wrap", false)
+		-- vim.api.nvim_win_set_option(w, "spell", false)
+		-- vim.api.nvim_win_set_option(w, "cursorline", false)
+		-- vim.api.nvim_win_set_option(w, "foldcolumn", "0")
+		-- vim.api.nvim_win_set_option(w, "foldenable", false)
+		-- vim.api.nvim_win_set_option(w, "foldmethod", "manual")
+		-- vim.api.nvim_win_set_option(w, "list", false)
+		vim.cmd("setlocal scrolloff=0")
+		vim.cmd("setlocal sidescrolloff=0")
+		vim.cmd("setlocal nowrap")
+		vim.cmd("setlocal nospell")
+		vim.cmd("setlocal nocursorline")
+		vim.cmd("setlocal foldcolumn=0")
+		vim.cmd("setlocal nofoldenable")
+		vim.cmd("setlocal foldmethod=manual")
+		vim.cmd("setlocal nolist")
+	end
 end
 
 local init_win_width = vimfn.editable_width(0)
@@ -113,16 +119,11 @@ function M.open(dir_name, opts)
 		opts.win_width = opts.win_width or vimfn.editable_width(0)
 		buffer:set_win_width_maybe_redraw(opts.win_width)
 	end
+
 	if buffer:is_focused() then
-		buffer:set_win_options(buffer:get_focused_win())
-		-- This puts the cursor on the row after the header (if possible). We
-		-- can't simply do this after _config_new as preview buffer might thus
-		-- be missed.
-		if not buffer._cur_row_init_reset then
-			vimfn.setrow(math.min(2, vim.api.nvim_buf_line_count(buffer.id)))
-			buffer._cur_row_init_reset = true
-		end
+		buffer:_on_open_focused()
 	end
+
 	return buffer, new
 end
 
