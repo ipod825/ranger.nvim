@@ -23,16 +23,26 @@ function M.get_current_buffer()
 	return ui.Buffer.get_current_buffer()
 end
 
-function M:set_win_options()
-	vim.wo.scrolloff = 0
-	vim.wo.sidescrolloff = 0
-	vim.wo.wrap = false
-	vim.wo.spell = false
-	vim.wo.cursorline = false
-	vim.wo.foldcolumn = "0"
-	vim.wo.foldenable = false
-	vim.foldmethod = "manual"
-	vim.list = false
+function M:set_win_options(w)
+	-- TODO(smwang): The API has bugs that sets the global values
+	-- vim.api.nvim_win_set_option(w, "scrolloff", 0)
+	-- vim.api.nvim_win_set_option(w, "sidescrolloff", 0)
+	-- vim.api.nvim_win_set_option(w, "wrap", false)
+	-- vim.api.nvim_win_set_option(w, "spell", false)
+	-- vim.api.nvim_win_set_option(w, "cursorline", false)
+	-- vim.api.nvim_win_set_option(w, "foldcolumn", "0")
+	-- vim.api.nvim_win_set_option(w, "foldenable", false)
+	-- vim.api.nvim_win_set_option(w, "foldmethod", "manual")
+	-- vim.api.nvim_win_set_option(w, "list", false)
+	vim.cmd("setlocal scrolloff=0")
+	vim.cmd("setlocal sidescrolloff=0")
+	vim.cmd("setlocal nowrap")
+	vim.cmd("setlocal nospell")
+	vim.cmd("setlocal nocursorline")
+	vim.cmd("setlocal foldcolumn=0")
+	vim.cmd("setlocal nofoldenable")
+	vim.cmd("setlocal foldmethod=manual")
+	vim.cmd("setlocal nolist")
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
 end
 
@@ -103,8 +113,8 @@ function M.open(dir_name, opts)
 		opts.win_width = opts.win_width or vimfn.editable_width(0)
 		buffer:set_win_width_maybe_redraw(opts.win_width)
 	end
-	if M.get_current_buffer() == buffer then
-		buffer:set_win_options()
+	if buffer:is_focused() then
+		buffer:set_win_options(buffer:get_focused_win())
 		-- This puts the cursor on the row after the header (if possible). We
 		-- can't simply do this after _config_new as preview buffer might thus
 		-- be missed.

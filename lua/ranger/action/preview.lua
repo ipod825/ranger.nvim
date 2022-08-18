@@ -100,14 +100,10 @@ function M.preview()
 				local row = grid:add_row()
 				row:add_column({ width = panel_width })
 				row:add_column():fill_window(
-					ui.BorderedWindow(
-						preview_buffer,
-						{ wo = { wrap = true }, w = { ranger_previewer = cur_win } },
-						{
-							highlight = "RangerFloatingPreviewBorder",
-							border = { nil, nil, nil, nil, nil, nil, nil, "│" },
-						}
-					)
+					ui.BorderedWindow(preview_buffer, { wo = { wrap = true }, w = { ranger_previewer = cur_win } }, {
+						highlight = "RangerFloatingPreviewBorder",
+						border = { nil, nil, nil, nil, nil, nil, nil, "│" },
+					})
 				)
 				grid:show()
 			else

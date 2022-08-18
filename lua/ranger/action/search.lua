@@ -4,7 +4,6 @@ local utils = require("ranger.action.utils")
 local KVIter = require("libp.datatype.KVIter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
-local a = require("plenary.async")
 
 function M.draw_search_buffer(buffer, search_buffer, substr)
 	local nodes = buffer.root:flatten_children()
@@ -71,10 +70,10 @@ function M.start()
 			M.draw_search_buffer(buffer, search_buffer, pattern)
 			local search_window_row = vimfn.getrow(search_window.id)
 			search_res = vim.api.nvim_buf_get_lines(search_buffer.id, search_window_row - 1, search_window_row, true)[1]
-			vim.defer_fn(handle, 50)
+			vim.defer_fn(handle, 20)
 		end
 	end
-	vim.defer_fn(handle, 50)
+	vim.defer_fn(handle, 20)
 
 	cmdline:confirm()
 	search_window:close()
