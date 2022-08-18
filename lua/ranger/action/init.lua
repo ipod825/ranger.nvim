@@ -88,7 +88,7 @@ function M.rename()
 			-- And the result for the new would be:
 			--  {[0] = {'./newa'}, [1] = {'./newa/newb'}}
 			local res = {}
-			local lines = vim.api.nvim_buf_get_lines(buffer.id, 0, -1, true)
+			local lines = buffer:get_lines()
 			local nodes = buffer.root:flatten_children()
 			assert(#nodes == #lines)
 

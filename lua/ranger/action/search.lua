@@ -69,7 +69,7 @@ function M.start()
 		if pattern then
 			M.draw_search_buffer(buffer, search_buffer, pattern)
 			local search_window_row = vimfn.getrow(search_window.id)
-			search_res = vim.api.nvim_buf_get_lines(search_buffer.id, search_window_row - 1, search_window_row, true)[1]
+			search_res = search_buffer:get_line(search_window_row)
 			vim.defer_fn(handle, 20)
 		end
 	end
