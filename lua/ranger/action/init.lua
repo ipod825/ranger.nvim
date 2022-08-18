@@ -3,6 +3,7 @@ local M = {
 	transfer = require("ranger.action.transfer"),
 	trash = require("ranger.action.trash"),
 	preview = require("ranger.action.preview"),
+	search = require("ranger.action.search"),
 }
 local Rifle = require("ranger.action.Rifle")
 local Buffer = require("ranger.Buffer")

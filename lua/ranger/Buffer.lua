@@ -202,7 +202,7 @@ end
 -- might be used for highlighting the selected row of self.
 function M:set_row_hl(row, cur_vim_row)
 	local node = self:nodes(row)
-	cur_vim_row = cur_vim_row or vimfn.current_row()
+	cur_vim_row = cur_vim_row or vimfn.getrow()
 	if node then
 		local hl = node.highlight
 		if cur_vim_row == row then
@@ -285,7 +285,7 @@ function M:_config_new(dir_name, opts)
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		buffer = self.id,
 		callback = function()
-			local new_row = vimfn.current_row()
+			local new_row = vimfn.getrow()
 			self:clear_hl(self.cur_row)
 			-- TODO(smwang): Workaround on bug of clear_highlight
 			-- https://github.com/neovim/neovim/issues/19511

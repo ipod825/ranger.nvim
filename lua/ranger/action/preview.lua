@@ -64,11 +64,11 @@ function M.preview()
 	end
 
 	local buffer, node = utils.get_cur_buffer_and_node()
-	local ori_row = vimfn.current_row()
+	local ori_row = vimfn.getrow()
 	buffer:set_win_width_maybe_redraw(panel_width)
 	a.void(function()
 		a.util.sleep(30)
-		if vimfn.current_row() ~= ori_row then
+		if vimfn.getrow() ~= ori_row then
 			return
 		end
 		local preview_buffer
@@ -92,7 +92,7 @@ function M.preview()
 			end
 		end
 
-		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.current_row() == ori_row then
+		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.getrow() == ori_row then
 			M.close_all_preview_windows_in_current_tabpage()
 
 			if floating_preview then

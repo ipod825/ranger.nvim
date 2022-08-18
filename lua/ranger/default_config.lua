@@ -21,7 +21,7 @@ return {
 		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerCut = { ctermfg = "grey", fg = "#808080" },
 		RangerCopied = { ctermfg = 13, fg = "#ff00ff" },
-		RangerDir = { ctermfg = 26, fg = "#3e91f7" },
+		RangerDir = { ctermfg = 26, fg = "#00afff" },
 		RangerFile = { ctermfg = "white", fg = "#ffffff" },
 		RangerLink = { ctermfg = 51, fg = "#00ffff" },
 		RangerExe = { ctermfg = 22, fg = "#005f00" },
@@ -44,6 +44,7 @@ return {
 			u = action.trash.restore_last,
 			i = action.rename,
 			P = action.preview.toggle,
+			["/"] = action.search.start,
 		},
 		v = {
 			v = action.transfer.toggle_select,
