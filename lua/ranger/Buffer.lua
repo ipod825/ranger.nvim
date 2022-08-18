@@ -12,14 +12,6 @@ local VIter = require("libp.datatype.VIter")
 local functional = require("libp.functional")
 local a = require("plenary.async")
 
-function M.open_or_new(buf_opts)
-	return ui.Buffer.open_or_new(buf_opts, M)
-end
-
-function M.get_or_new(buf_opts)
-	return ui.Buffer.get_or_new(buf_opts, M)
-end
-
 function M.get_current_buffer()
 	return ui.Buffer.get_current_buffer()
 end
@@ -101,14 +93,14 @@ function M.open(dir_name, opts)
 	local buffer, new
 	if buf_opts.open_cmd == "preview" then
 		-- Caller will render itself.
-		buffer, new = M.get_or_new(buf_opts)
+		buffer, new = M:get_or_new(buf_opts)
 	elseif #buf_opts.open_cmd == 0 then
-		buffer, new = M.get_or_new(buf_opts)
+		buffer, new = M:get_or_new(buf_opts)
 		local grid = ui.Grid()
 		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
 		grid:show()
 	else
-		buffer, new = M.open_or_new(buf_opts)
+		buffer, new = M:open_or_new(buf_opts)
 	end
 
 	if new then
