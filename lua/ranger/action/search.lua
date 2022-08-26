@@ -4,28 +4,46 @@ local utils = require("ranger.action.utils")
 local KVIter = require("libp.datatype.KVIter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
+local functional = require("libp.functional")
 
 function M.draw_search_buffer(buffer, search_buffer, substr)
-	local nodes = buffer.root:flatten_children()
+	substr = substr or ""
 
-	local filtered_nodes = (substr and #substr > 0) and nodes:filter(function(n)
-		return n.name:match(substr)
-	end) or nodes
+	local nodes = buffer.root:flatten_children()
+	if buffer._reanger_search == substr then
+		return
+	end
+	buffer._reanger_search = substr
+
+	local ignore_case = (vim.o.smartcase and not substr:match("%u")) or vim.o.ignorecase
+
+	local find
+	if ignore_case then
+		substr = ("(%s)"):format(substr:lower())
+		find = function(name)
+			return name:lower():find(substr)
+		end
+	else
+		substr = ("(%s)"):format(substr)
+		find = function(name)
+			return name:find(substr)
+		end
+	end
+
+	local filtered_nodes = nodes:filter(function(n)
+		return find(n.name)
+	end)
 
 	search_buffer.content = filtered_nodes:map(function(e)
 		return e.name
 	end)
 	search_buffer:reload()
-
 	search_buffer:clear_hl(1, -1)
 
-	substr = substr and ("(%s)"):format(substr)
 	for row, node in KVIter(filtered_nodes) do
 		search_buffer:set_hl(node.highlight, row)
-		if substr then
-			local beg, ends = node.name:find(substr)
-			search_buffer:set_hl("IncSearch", row, beg, ends)
-		end
+		local beg, ends = find(node.name)
+		search_buffer:set_hl("IncSearch", row, beg, ends)
 	end
 end
 
@@ -36,7 +54,6 @@ end
 function M.start()
 	local buffer = utils.get_cur_buffer_and_node()
 	local search_buffer = ui.Buffer()
-	M.draw_search_buffer(buffer, search_buffer)
 
 	local search_window =
 		ui.Window(search_buffer, { wo = { winhighlight = "Normal:Normal", cursorline = true }, focus_on_open = true })
@@ -73,16 +90,18 @@ function M.start()
 			vim.defer_fn(handle, 20)
 		end
 	end
-	vim.defer_fn(handle, 20)
+	vim.defer_fn(handle, 0)
 
-	cmdline:confirm()
+	local confirmed_search_res = cmdline:confirm()
 	search_window:close()
 	vim.cmd("stopinsert")
 
-	for i, node in KVIter(buffer:nodes()) do
-		if node.name == search_res then
-			vimfn.setrow(i)
-			break
+	if confirmed_search_res then
+		for i, node in KVIter(buffer:nodes()) do
+			if node.name == search_res then
+				vimfn.setrow(i)
+				break
+			end
 		end
 	end
 end
