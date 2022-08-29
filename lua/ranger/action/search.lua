@@ -1,7 +1,7 @@
 local M = {}
 local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
-local KVIter = require("libp.datatype.KVIter")
+local VIter = require("libp.datatype.VIter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
 local functional = require("libp.functional")
@@ -34,17 +34,14 @@ function M.draw_search_buffer(buffer, search_buffer, substr)
 		return find(n.name)
 	end)
 
-	search_buffer.content = filtered_nodes:map(function(e)
+	search_buffer:set_content_and_reload(filtered_nodes:map(function(e)
 		return e.name
-	end)
-	search_buffer:reload()
-	search_buffer:clear_hl(1, -1)
+	end))
 
-	for row, node in KVIter(filtered_nodes) do
-		search_buffer:set_hl(node.highlight, row)
-		local beg, ends = find(node.name)
-		search_buffer:set_hl("IncSearch", row, beg, ends)
-	end
+	search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
+		local beg, ends = find(n.name)
+		return row, { { n.highlight, row }, { "IncSearch", row, beg, ends } }
+	end))
 end
 
 function M.move(search_window, direction)

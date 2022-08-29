@@ -75,7 +75,7 @@ function M.preview()
 		if node.type == "header" then
 			preview_buffer = ui.Buffer()
 		elseif node.type == "directory" then
-			preview_buffer = Buffer.open(node.abspath, { open_cmd = "preview", win_width = preview_width })
+			preview_buffer = Buffer.open(node.abspath, { open_cmd = "caller", win_width = preview_width })
 		elseif node.type == "file" then
 			local mime_str = mime.info(node.abspath)
 			if mime_str:match("text") or mime_str:match("x-empty") then

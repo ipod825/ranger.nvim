@@ -9,12 +9,9 @@ local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
 local abbrev = require("ranger.abbrev")
 local VIter = require("libp.datatype.VIter")
+local KVIter = require("libp.datatype.KVIter")
 local functional = require("libp.functional")
 local a = require("plenary.async")
-
-function M.get_current_buffer()
-	return ui.Buffer.get_current_buffer()
-end
 
 function M:_on_open_focused()
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
@@ -80,7 +77,7 @@ function M.open(dir_name, opts)
 		filename = "ranger://" .. dir_name,
 		open_cmd = opts.open_cmd,
 		buf_enter_reload = false,
-		content = {},
+		content = false,
 		bo = {
 			filetype = "ranger",
 			bufhidden = "hide",
@@ -91,7 +88,7 @@ function M.open(dir_name, opts)
 	}
 
 	local buffer, new
-	if buf_opts.open_cmd == "preview" then
+	if buf_opts.open_cmd == "caller" then
 		-- Caller will render itself.
 		buffer, new = M:get_or_new(buf_opts)
 	elseif #buf_opts.open_cmd == 0 then
@@ -163,31 +160,35 @@ function M:build_nodes(directory)
 	return root
 end
 
-function M:reload()
-	if not self.root then
-		return
-	end
-	self:SUPER():reload()
+function M:reload_highlight()
 	self:clear_hl(1, -1)
-
-	local total_lines = vim.api.nvim_buf_line_count(self.id)
-	self.cur_row = math.min(self.cur_row, total_lines)
-	for row in itt.range(total_lines) do
-		self:set_row_hl(row, self.cur_row)
+	for row, node in KVIter(self.root:flatten_children()) do
+		self:set_hl(node.highlight, row)
 	end
+
+	self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
+	self:set_selected_row_hl(self.cur_row)
 end
 
--- Set content and highlight assuming the nodes (from which the content were
--- based on) were built.
-function M:draw()
-	self.content = self.root:flatten_children():map(function(e)
-		if e.type == "header" then
-			return abbrev.path((" "):rep(e.level * 2) .. e.name, self.win_width)
-		else
-			return abbrev.name((" "):rep(e.level * 2) .. e.name, self.win_width)
-		end
-	end)
-	self:reload()
+-- Set content and highlight assuming the nodes (which the content were based
+-- on) were built.
+function M:draw(plain)
+	local content
+	if plain then
+		content = self.root:flatten_children():map(function(e)
+			return e.name
+		end)
+	else
+		content = self.root:flatten_children():map(function(e)
+			if e.type == "header" then
+				return abbrev.path((" "):rep(e.level * 2) .. e.name, self.win_width)
+			else
+				return abbrev.name((" "):rep(e.level * 2) .. e.name, self.win_width)
+			end
+		end)
+	end
+
+	self:set_content_and_reload(content)
 end
 
 function M:rebuild_nodes()
@@ -200,20 +201,18 @@ function M:nodes(ind)
 	return res
 end
 
--- If the current buffer (self.id) is not in focus, `cur_vim_row` must be passed
--- in as otherwise the wrong row (the row of whatever buffer is in focus now)
--- might be used for highlighting the selected row of self.
-function M:set_row_hl(row, cur_vim_row)
-	local node = self:nodes(row)
-	cur_vim_row = cur_vim_row or vimfn.getrow()
-	if node then
-		local hl = node.highlight
-		if cur_vim_row == row then
-			self:set_hl(hl .. "Sel", row)
-		else
-			self:set_hl(hl, row)
-		end
+function M:set_unselected_row_hl(row)
+	-- TODO(smwang): Ideally we don't need this check (caller should guarantee
+	-- that). But in CursorMoved handler there's a workaround that pass in 0 or
+	-- -1.
+	if row < 1 then
+		return
 	end
+	self:set_hl(self:nodes(row).highlight, row)
+end
+
+function M:set_selected_row_hl(row)
+	self:set_hl(self:nodes(row).highlight .. "Sel", row)
 end
 
 function M:disable_fs_event_watcher()
@@ -292,9 +291,9 @@ function M:_config_new(dir_name, opts)
 			self:clear_hl(self.cur_row)
 			-- TODO(smwang): Workaround on bug of clear_highlight
 			-- https://github.com/neovim/neovim/issues/19511
-			self:set_row_hl(self.cur_row - 1)
-			self:set_row_hl(self.cur_row)
-			self:set_row_hl(new_row)
+			self:set_unselected_row_hl(self.cur_row - 1)
+			self:set_unselected_row_hl(self.cur_row)
+			self:set_selected_row_hl(new_row)
 			self.cur_row = new_row
 
 			require("ranger.action").preview()
