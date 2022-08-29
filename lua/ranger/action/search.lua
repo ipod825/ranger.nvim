@@ -2,6 +2,7 @@ local M = {}
 local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
 local VIter = require("libp.datatype.VIter")
+local KVIter = require("libp.datatype.KVIter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
 local functional = require("libp.functional")
