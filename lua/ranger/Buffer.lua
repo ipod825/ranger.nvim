@@ -166,8 +166,10 @@ function M:reload_highlight()
 		self:set_hl(node.highlight, row)
 	end
 
-	self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
-	self:set_selected_row_hl(self.cur_row)
+	if not self:is_editing() then
+		self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
+		self:set_selected_row_hl(self.cur_row)
+	end
 end
 
 -- Set content and highlight assuming the nodes (which the content were based
@@ -287,6 +289,9 @@ function M:_config_new(dir_name, opts)
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		buffer = self.id,
 		callback = function()
+			if self:is_editing() then
+				return
+			end
 			local new_row = vimfn.getrow()
 			self:clear_hl(self.cur_row)
 			-- TODO(smwang): Workaround on bug of clear_highlight

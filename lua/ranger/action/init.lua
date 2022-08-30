@@ -77,6 +77,9 @@ end
 function M.rename()
 	local buffer = M.utils.get_cur_buffer_and_node()
 	buffer:edit({
+		fill_lines = function()
+			buffer:draw(true)
+		end,
 		get_items = function()
 			-- The result is the absolute path inferred by the node hierarchy
 			-- based on the current buffer content (instead of nodes' stored
