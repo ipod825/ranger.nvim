@@ -55,51 +55,57 @@ function M.preview()
 	if not is_previewing then
 		return
 	end
-	local cur_win = vim.api.nvim_get_current_win()
-	if vimfn.win_get_var(cur_win, "ranger_previewer") then
+	local previewer_win = vim.api.nvim_get_current_win()
+	if vimfn.win_get_var(previewer_win, "ranger_previewer") then
 		return
 	end
 
-	local buffer, node = utils.get_cur_buffer_and_node()
+	local previewer_buffer, node = utils.get_cur_buffer_and_node()
 	local ori_row = vimfn.getrow()
-	buffer:set_win_width_maybe_redraw(panel_width)
+	previewer_buffer:set_win_width_maybe_redraw(panel_width)
 	a.void(function()
 		a.util.sleep(30)
 		if vimfn.getrow() ~= ori_row then
 			return
 		end
-		local preview_buffer
+		local previewee_buffer
 		if node.type == "header" then
-			preview_buffer = ui.Buffer()
+			previewee_buffer = ui.Buffer()
 		elseif node.type == "directory" then
-			preview_buffer = Buffer.open(node.abspath, { open_cmd = "caller", win_width = preview_width })
+			previewee_buffer = Buffer.open(node.abspath, { open_cmd = "caller", win_width = preview_width })
 		elseif node.type == "file" then
 			local mime_str = mime.info(node.abspath)
 			if mime_str:match("text") or mime_str:match("x-empty") then
-				preview_buffer = ui.FileBuffer(node.abspath)
+				previewee_buffer = ui.FileBuffer(node.abspath)
 				-- TODO(remove version check when nvim version stable)
 				if vim.version().minor <= 7 then
-					vim.filetype.match(node.abspath, preview_buffer.id)
+					vim.filetype.match(node.abspath, previewee_buffer.id)
 				else
 					local ft = vim.filetype.match({ filename = node.abspath }) or ""
-					vim.api.nvim_buf_set_option(preview_buffer.id, "filetype", ft)
+					vim.api.nvim_buf_set_option(previewee_buffer.id, "filetype", ft)
 				end
 			else
-				preview_buffer = ui.Buffer({ content = { mime_str } })
+				previewee_buffer = ui.Buffer({ content = { mime_str } })
 			end
 		end
 
-		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.getrow() == ori_row then
+		if
+			previewee_buffer
+			and vim.api.nvim_get_current_buf() == previewer_buffer.id
+			and vimfn.getrow() == ori_row
+			and previewer_buffer._previewee_buffer_id ~= previewee_buffer.id
+		then
+			previewer_buffer._previewee_buffer_id = previewee_buffer.id
 			M.close_all_preview_windows_in_current_tabpage()
 
 			vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
 			local preview_win = vim.api.nvim_get_current_win()
-			vim.api.nvim_win_set_buf(preview_win, preview_buffer.id)
-			vim.api.nvim_win_set_var(preview_win, "ranger_previewer", cur_win)
+			vim.api.nvim_win_set_buf(preview_win, previewee_buffer.id)
+			vim.api.nvim_win_set_var(preview_win, "ranger_previewer", previewer_win)
 
 			local ori_eventignore = vim.o.eventignore
 			vim.opt.eventignore:append("all")
-			vim.api.nvim_set_current_win(cur_win)
+			vim.api.nvim_set_current_win(previewer_win)
 			vim.o.eventignore = ori_eventignore
 		end
 	end)()
