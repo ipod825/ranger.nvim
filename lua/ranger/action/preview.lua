@@ -11,15 +11,12 @@ local a = require("plenary.async")
 local panel_width
 local preview_width
 local is_previewing
-local floating_preview
 
 function M.setup(opts)
 	local editable_width = vimfn.editable_width(0)
-	floating_preview = opts.floating_preview
 	panel_width = opts.preview_panel_width > 1 and opts.preview_panel_width
 		or math.floor(editable_width * opts.preview_panel_width)
-	-- -1 for border
-	preview_width = editable_width - panel_width - 1
+	preview_width = editable_width - panel_width
 	is_previewing = opts.preview_default_on
 	if is_previewing then
 		Buffer.set_init_win_width(panel_width)
@@ -95,28 +92,15 @@ function M.preview()
 		if preview_buffer and vim.api.nvim_get_current_buf() == buffer.id and vimfn.getrow() == ori_row then
 			M.close_all_preview_windows_in_current_tabpage()
 
-			if floating_preview then
-				local grid = ui.Grid({ relative = "win", focusable = true, noautocmd = true })
-				local row = grid:add_row()
-				row:add_column({ width = panel_width })
-				row:add_column():fill_window(
-					ui.BorderedWindow(preview_buffer, { wo = { wrap = true }, w = { ranger_previewer = cur_win } }, {
-						highlight = "RangerFloatingPreviewBorder",
-						border = { nil, nil, nil, nil, nil, nil, nil, "│" },
-					})
-				)
-				grid:show()
-			else
-				vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
-				local preview_win = vim.api.nvim_get_current_win()
-				vim.api.nvim_win_set_buf(preview_win, preview_buffer.id)
-				vim.api.nvim_win_set_var(preview_win, "ranger_previewer", cur_win)
+			vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
+			local preview_win = vim.api.nvim_get_current_win()
+			vim.api.nvim_win_set_buf(preview_win, preview_buffer.id)
+			vim.api.nvim_win_set_var(preview_win, "ranger_previewer", cur_win)
 
-				local ori_eventignore = vim.o.eventignore
-				vim.opt.eventignore:append("all")
-				vim.api.nvim_set_current_win(cur_win)
-				vim.o.eventignore = ori_eventignore
-			end
+			local ori_eventignore = vim.o.eventignore
+			vim.opt.eventignore:append("all")
+			vim.api.nvim_set_current_win(cur_win)
+			vim.o.eventignore = ori_eventignore
 		end
 	end)()
 end
