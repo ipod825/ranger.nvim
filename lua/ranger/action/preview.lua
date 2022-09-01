@@ -89,13 +89,7 @@ function M.preview()
 			end
 		end
 
-		if
-			previewee_buffer
-			and vim.api.nvim_get_current_buf() == previewer_buffer.id
-			and vimfn.getrow() == ori_row
-			and previewer_buffer._previewee_buffer_id ~= previewee_buffer.id
-		then
-			previewer_buffer._previewee_buffer_id = previewee_buffer.id
+		if previewee_buffer and vim.api.nvim_get_current_buf() == previewer_buffer.id and vimfn.getrow() == ori_row then
 			M.close_all_preview_windows_in_current_tabpage()
 
 			vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
