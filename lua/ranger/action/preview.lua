@@ -77,13 +77,13 @@ function M.preview()
 			local mime_str = mime.info(node.abspath)
 			if mime_str:match("text") or mime_str:match("x-empty") then
 				previewee_buffer = ui.FileBuffer(node.abspath)
-				-- TODO(remove version check when nvim version stable)
-				if vim.version().minor <= 7 then
-					vim.filetype.match(node.abspath, previewee_buffer.id)
-				else
-					local ft = vim.filetype.match({ filename = node.abspath }) or ""
-					vim.api.nvim_buf_set_option(previewee_buffer.id, "filetype", ft)
-				end
+				-- TODO(With FileBuffer in the buffadd path, this can cause treesitter textobj problem.)
+				-- if vim.version().minor <= 7 then
+				-- 	vim.filetype.match(node.abspath, previewee_buffer.id)
+				-- else
+				-- 	local ft = vim.filetype.match({ filename = node.abspath }) or ""
+				-- 	vim.api.nvim_buf_set_option(previewee_buffer.id, "filetype", ft)
+				-- end
 			else
 				previewee_buffer = ui.Buffer({ content = { mime_str } })
 			end
