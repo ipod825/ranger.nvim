@@ -39,6 +39,7 @@ return {
 			u = action.trash.restore_last,
 			i = action.rename,
 			P = action.preview.toggle,
+			S = action.sort,
 			["/"] = action.search.start,
 		},
 		v = {

@@ -1,12 +1,11 @@
 local M = require("libp.datatype.Class"):EXTEND()
 local List = require("libp.datatype.List")
 local values = require("libp.datatype.itertools").values
+local args = require("libp.utils.args")
 
 function M.cmp(a, b)
 	if a.sorting_order ~= b.sorting_order then
 		return (a.sorting_order < b.sorting_order)
-	else
-		return (a.name < b.name)
 	end
 end
 
@@ -76,11 +75,16 @@ function M:remove_all_children()
 	self:mark_flatten_children_dirty()
 end
 
-function M:sort()
+function M:sort(cmp)
+	vim.validate({ cmp = { cmp, "f", true } })
+	local composite_cmp = cmp and function(a, b)
+		return args.get_default_lazy(M.cmp(a, b), cmp, a, b)
+	end or M.cmp
+
 	for _, child in ipairs(self.children) do
-		child:sort()
+		child:sort(composite_cmp)
 	end
-	self.children:sort(M.cmp)
+	self.children:sort(composite_cmp)
 	self:mark_flatten_children_dirty()
 end
 

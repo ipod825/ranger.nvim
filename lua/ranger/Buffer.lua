@@ -8,9 +8,10 @@ local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.datatype.itertools")
 local abbrev = require("ranger.abbrev")
+local List = require("libp.datatype.List")
 local VIter = require("libp.datatype.VIter")
 local KVIter = require("libp.datatype.KVIter")
-local functional = require("libp.functional")
+local OrderedDict = require("libp.datatype.OrderedDict")
 local a = require("plenary.async")
 
 function M:_on_open_focused()
@@ -149,7 +150,7 @@ function M:_add_dir_node_children(node, abspath)
 		end
 	end
 
-	node:sort()
+	node:sort(self._sort_fn)
 end
 
 function M:build_nodes(directory)
@@ -160,6 +161,7 @@ function M:build_nodes(directory)
 	return root
 end
 
+-- Called by parent (ui.Buffer:reload) to set highlight after reload.
 function M:reload_highlight()
 	self:clear_hl(1, -1)
 	for row, node in KVIter(self.root:flatten_children()) do
@@ -172,6 +174,16 @@ function M:reload_highlight()
 	end
 end
 
+function M:add_right_display(key, fn)
+	self._right_display = self._right_display or OrderedDict()
+	self._right_display[key] = fn
+end
+
+function M:add_left_display(fn)
+	self._left_display = self._left_display or List()
+	self._left_display:append(fn)
+end
+
 -- Set content and highlight assuming the nodes (which the content were based
 -- on) were built.
 function M:draw(plain)
@@ -182,11 +194,30 @@ function M:draw(plain)
 		end)
 	else
 		content = self.root:flatten_children():map(function(e)
-			if e.type == "header" then
-				return abbrev.path((" "):rep(e.level * 2) .. e.name, self.win_width)
-			else
-				return abbrev.name((" "):rep(e.level * 2) .. e.name, self.win_width)
+			local res
+
+			local width = self.win_width - 1
+			local right
+
+			if self._right_display then
+				right = ""
+				for fn in OrderedDict.values(self._right_display) do
+					right = right .. fn(e)
+				end
+				width = width - vim.fn.strwidth(right)
 			end
+
+			if e.type == "header" then
+				res = abbrev.path((" "):rep(e.level * 2) .. e.name, width)
+			else
+				res = abbrev.name((" "):rep(e.level * 2) .. e.name, width)
+			end
+
+			if right then
+				res = res .. right
+			end
+
+			return res
 		end)
 	end
 
@@ -201,6 +232,12 @@ function M:nodes(ind)
 	vim.validate({ ind = { ind, "n", true } })
 	local res = self.root:flatten_children(ind)
 	return res
+end
+
+function M:set_sort_fn(fn)
+	self._sort_fn = fn or function(first, second)
+		return first.name < second.name
+	end
 end
 
 function M:set_unselected_row_hl(row)
@@ -281,6 +318,7 @@ function M:_config_new(dir_name, opts)
 	self.cur_row = 1
 	self.directory = dir_name
 	self.expanded_abspaths = Set()
+	self:set_sort_fn()
 	self:_add_fs_event_watcher(self.directory)
 	self:enable_fs_event_watcher()
 	self:rebuild_nodes()
