@@ -99,9 +99,9 @@ function M.preview()
 			M.close_all_preview_windows_in_current_tabpage()
 
 			vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
-			local preview_win = vim.api.nvim_get_current_win()
-			vim.api.nvim_win_set_buf(preview_win, previewee_buffer.id)
-			vim.api.nvim_win_set_var(preview_win, "ranger_previewer", previewer_win)
+			local previewee_win = vim.api.nvim_get_current_win()
+			vim.api.nvim_win_set_buf(previewee_win, previewee_buffer.id)
+			vim.api.nvim_win_set_var(previewee_win, "ranger_previewer", previewer_win)
 
 			local ori_eventignore = vim.o.eventignore
 			vim.opt.eventignore:append("all")
