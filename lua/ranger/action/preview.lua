@@ -5,7 +5,6 @@ local vimfn = require("libp.utils.vimfn")
 local ui = require("libp.ui")
 local itt = require("libp.datatype.itertools")
 local mime = require("libp.mime")
-local Set = require("libp.datatype.Set")
 local a = require("plenary.async")
 
 local panel_width
@@ -42,12 +41,19 @@ end
 
 function M.toggle()
 	is_previewing = not is_previewing
+
 	local buffer = utils.get_cur_buffer_and_node()
 	if is_previewing then
 		M.preview()
 	else
 		M.close_all_preview_windows_in_current_tabpage()
 		buffer:set_win_width_maybe_redraw(vimfn.editable_width(0))
+	end
+
+	if is_previewing then
+		Buffer.set_init_win_width(panel_width)
+	else
+		Buffer.set_init_win_width(vimfn.editable_width(0))
 	end
 end
 
