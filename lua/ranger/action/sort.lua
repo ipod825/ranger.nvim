@@ -1,9 +1,9 @@
 local M = {}
 local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
-local fs = require("libp.fs")
 local uv = vim.loop
 local vimfn = require("libp.utils.vimfn")
+local itt = require("libp.datatype.itertools")
 
 local Order = { ASCENDING = 1, DESCENDING = 2 }
 
@@ -38,6 +38,20 @@ function M.open_menu()
 		}):select()
 	end
 	M.sort(metric, order)
+end
+
+local file_sz_display_wid = 6
+local function size_str(st_size)
+	local res = tonumber(st_size)
+	for u in itt.values({ "B", "K", "M", "G", "T", "P" }) do
+		if res < 1024 then
+			res = tostring(res):sub(1, file_sz_display_wid - 2):gsub("%.$", "")
+			return ("%s%s %s"):format((" "):rep(file_sz_display_wid - #res - 2), res, u)
+		else
+			res = res / 1024
+		end
+	end
+	return ("?"):rep(file_sz_display_wid)
 end
 
 function M.sort(metric, order)
@@ -80,18 +94,25 @@ function M.sort(metric, order)
 						vimfn.warn("Error loading stats: " .. node.abspath)
 						return 0
 					end
-					node[metric] = stat[metric].sec + stat[metric].nsec / 1000000000
+					node[metric] = stat[metric].sec
 				end
 				return node[metric]
 			end
 		end
 
-		if metric ~= "name" and metric ~= "default" then
+		if metric == "size" then
 			buffer:add_right_display("sort", function(node)
 				if node.type == "header" then
 					return ""
 				end
-				return " " .. get_metric(node)
+				return " " .. node.type == "directory" and get_metric(node) or size_str(get_metric(node))
+			end)
+		elseif metric:match("time$") then
+			buffer:add_right_display("sort", function(node)
+				if node.type == "header" then
+					return ""
+				end
+				return " " .. os.date("!%m/%d/%y %H:%M:%S", math.floor(get_metric(node)))
 			end)
 		end
 
