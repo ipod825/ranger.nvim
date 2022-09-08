@@ -14,6 +14,11 @@ local KVIter = require("libp.datatype.KVIter")
 local OrderedDict = require("libp.datatype.OrderedDict")
 local a = require("plenary.async")
 
+local open_opts
+function M.setup(opts)
+	open_opts = opts
+end
+
 function M:_on_open_focused()
 	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
 	if not self._ever_open_focused then
@@ -55,7 +60,7 @@ function M:set_win_width_maybe_redraw(win_width)
 end
 
 function M.open(dir_name, opts)
-	opts = vim.tbl_deep_extend("force", require("ranger.default_config"), opts or {})
+	opts = vim.tbl_deep_extend("force", open_opts, opts or {})
 	local ori_dir_name = dir_name
 
 	dir_name = dir_name:gsub("^~", os.getenv("HOME"))
