@@ -73,7 +73,7 @@ function M:init(config_file)
 				tests:append(M[test_sp[1]](unpack(vim.list_slice(test_sp, 2))))
 			end
 
-			local command = sp[2]
+			local command = vim.trim(sp[2])
 			-- Simple case, user specify only the command. For sophisicated
 			-- command like bash -c "command %s" user should add '%s' themselves
 			if not command:match("%%s") then

@@ -14,6 +14,7 @@ local Stack = require("libp.datatype.Stack")
 local Job = require("libp.Job")
 local uv = require("libp.fs.uv")
 local ui = require("libp.ui")
+local constants = require("libp.constants")
 
 local rifle
 function M.setup(opts)
@@ -89,9 +90,11 @@ function M.ask()
 	if node.type == "header" then
 		return
 	else
+		local commands = rifle:list_available_cmd(node.abspath)
 		local command = ui.Menu({
 			title = "Order",
-			content = rifle:list_available_cmd(node.abspath),
+			content = commands,
+			short_key_map = constants.LOWER_ALPHABETS[{ 1, #commands }],
 		}):select()
 		if command then
 			Job({ cmd = command:format(node.abspath), detached = true }):start()
