@@ -104,4 +104,8 @@ function M.start()
 	end
 end
 
-return M
+return setmetatable(M, {
+	__call = function()
+		return M.start()
+	end,
+})

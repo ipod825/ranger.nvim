@@ -40,7 +40,7 @@ return {
 			i = action.rename,
 			P = action.preview.toggle,
 			S = action.sort,
-			["/"] = action.search.start,
+			["/"] = action.search,
 		},
 		v = {
 			v = action.transfer.toggle_select,
