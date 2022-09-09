@@ -18,6 +18,7 @@ function M.open_menu()
 			"ctime",
 			"atime",
 		},
+		short_key_map = { "d", "n", "s", "m", "c", "a" },
 	}):select()
 	if not metric then
 		return
@@ -31,6 +32,7 @@ function M.open_menu()
 				"Ascending: small to large / early to late",
 				"Dscending: large to small / late to early ",
 			},
+			short_key_map = { "a", "d" },
 			select_map = {
 				Order.ASCENDING,
 				Order.DESCENDING,
