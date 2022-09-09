@@ -13,6 +13,7 @@ local path = require("libp.path")
 local Stack = require("libp.datatype.Stack")
 local Job = require("libp.Job")
 local uv = require("libp.fs.uv")
+local ui = require("libp.ui")
 
 local rifle
 function M.setup(opts)
@@ -71,6 +72,29 @@ function M.open(open_cmd)
 		else
 			vim.cmd(("%s %s"):format(open_cmd, node.abspath))
 			M.preview.close_all_preview_windows_in_current_tabpage()
+		end
+	end
+end
+
+function M.set_cwd()
+	local _, node = M.utils.get_cur_buffer_and_node()
+	if node.type ~= "directory" then
+		return
+	end
+	vimfn.set_cwd(node.abspath)
+end
+
+function M.ask()
+	local _, node = M.utils.get_cur_buffer_and_node()
+	if node.type == "header" then
+		return
+	else
+		local command = ui.Menu({
+			title = "Order",
+			content = rifle:list_available_cmd(node.abspath),
+		}):select()
+		if command then
+			Job({ cmd = command:format(node.abspath), detached = true }):start()
 		end
 	end
 end

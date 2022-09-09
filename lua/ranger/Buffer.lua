@@ -20,7 +20,7 @@ function M.setup(opts)
 end
 
 function M:_on_open_focused()
-	vim.cmd("lcd " .. self.directory:gsub(" ", "\\ "))
+	vimfn.set_cwd(self.directory)
 	if not self._ever_open_focused then
 		self._ever_open_focused = true
 		-- Puts the cursor on the row after the header.
@@ -345,6 +345,13 @@ function M:_config_new(dir_name, opts)
 			self.cur_row = new_row
 
 			require("ranger.action").preview()
+		end,
+	})
+
+	vim.api.nvim_create_autocmd("BufEnter", {
+		buffer = self.id,
+		callback = function()
+			vimfn.set_cwd(self.directory)
 		end,
 	})
 end

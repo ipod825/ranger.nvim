@@ -22,10 +22,16 @@ return {
 		RangerExe = { ctermfg = 22, fg = "#005f00" },
 	},
 	mappings = {
+		-- To unmap predefined keys, set them to false. To add new mappings, set
+		-- a key to a lua function. For e.g., to unmap `h` and add a mapping hh:
+		--  h = false,
+		--  hh = function() end
 		n = {
 			h = action.goto_parent,
 			l = action.open,
+			L = action.set_cwd,
 			t = require("libp.functional").bind(action.open, "tabedit"),
+			a = action.ask,
 			za = action.toggle_expand,
 			zh = action.toggle_hidden,
 			v = action.transfer.toggle_select,
