@@ -98,11 +98,6 @@ function M.open(dir_name, opts)
 	if buf_opts.open_cmd == "caller" then
 		-- Caller will render itself.
 		buffer, new = M:get_or_new(buf_opts)
-	elseif #buf_opts.open_cmd == 0 then
-		buffer, new = M:get_or_new(buf_opts)
-		local grid = ui.Grid()
-		grid:add_row({ focusable = true }):fill_window(ui.Window(buffer, { focus_on_open = true }))
-		grid:show()
 	else
 		buffer, new = M:open_or_new(buf_opts)
 	end
