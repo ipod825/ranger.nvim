@@ -71,7 +71,7 @@ function M.open(open_cmd)
 	else
 		local command = rifle:decide_open_cmd(node.abspath)
 		if command then
-			Job({ cmd = command, detached = true }):start()
+			Job({ cmd = command, detach = true }):start()
 		else
 			vim.cmd(("%s %s"):format(open_cmd, node.abspath))
 			M.preview.close_all_preview_windows_in_current_tabpage()
@@ -99,7 +99,7 @@ function M.ask()
 			short_key_map = constants.LOWER_ALPHABETS[{ 1, #commands }],
 		}):select()
 		if command then
-			Job({ cmd = command:format(node.abspath), detached = true }):start()
+			Job({ cmd = command:format(node.abspath), detach = true }):start()
 		end
 	end
 end
