@@ -212,6 +212,7 @@ function M.create_entries()
 			buffer:draw()
 		end,
 	})
+	vim.cmd("normal! o")
 end
 
 return M

@@ -6,6 +6,9 @@ local ui = require("libp.ui")
 local itt = require("libp.datatype.itertools")
 local mime = require("libp.mime")
 local a = require("plenary.async")
+local functional = require("libp.functional")
+local Ueberzug = require("libp.integration.Ueberzug")
+local uv = require("libp.fs.uv")
 
 local panel_width
 local preview_width
@@ -75,12 +78,13 @@ function M.preview()
 			return
 		end
 		local previewee_buffer
+		local post_previewee_window_open = functional.nop
 		if node.type == "header" then
 			previewee_buffer = ui.Buffer()
 		elseif node.type == "directory" then
 			previewee_buffer = Buffer.open(node.abspath, { open_cmd = "caller", win_width = preview_width })
-		elseif node.type == "file" then
-			local mime_str = mime.info(node.abspath)
+		elseif node.type == "file" or node.type == "link" then
+			local mime_str = mime.info(node.type == "link" and uv.fs_readlink(node.abspath) or node.abspath)
 			if mime_str:match("text") or mime_str:match("x-empty") then
 				previewee_buffer = ui.FileBuffer(node.abspath)
 				-- TODO(With FileBuffer in the buffadd path, this can cause treesitter textobj problem.)
@@ -90,6 +94,35 @@ function M.preview()
 				-- 	local ft = vim.filetype.match({ filename = node.abspath }) or ""
 				-- 	vim.api.nvim_buf_set_option(previewee_buffer.id, "filetype", ft)
 				-- end
+			elseif mime_str:match("image/") then
+				previewee_buffer = ui.Buffer()
+				post_previewee_window_open = function(win_id)
+					-- TODO(smwang): The API has bugs that sets the global values
+					vim.api.nvim_win_set_option(win_id, "cursorline", false)
+
+					local ueberzug = Ueberzug()
+					ueberzug:add({
+						x = panel_width,
+						y = 0,
+						path = node.abspath,
+						width = preview_width,
+						height = vim.api.nvim_win_get_height(0),
+						scaler = "contain",
+					})
+					vim.api.nvim_create_autocmd("WinClosed", {
+						pattern = tostring(win_id),
+						once = true,
+						callback = function()
+							ueberzug:kill()
+						end,
+					})
+					vim.api.nvim_create_autocmd("TabLeave", {
+						once = true,
+						callback = function()
+							ueberzug:kill()
+						end,
+					})
+				end
 			else
 				previewee_buffer = ui.Buffer({ content = { mime_str } })
 			end
@@ -102,6 +135,7 @@ function M.preview()
 			local previewee_win = vim.api.nvim_get_current_win()
 			vim.api.nvim_win_set_buf(previewee_win, previewee_buffer.id)
 			vim.api.nvim_win_set_var(previewee_win, "ranger_previewer", previewer_win)
+			post_previewee_window_open(previewee_win)
 
 			local ori_eventignore = vim.o.eventignore
 			vim.opt.eventignore:append("all")

@@ -107,7 +107,6 @@ function M.sort(metric, order)
 				if node.type == "header" then
 					return ""
 				end
-				require("libp.log").warn(node.type)
 				return " " .. (node.type == "directory" and get_metric(node) or size_str(get_metric(node)))
 			end)
 		elseif metric:match("time$") then
