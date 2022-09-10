@@ -12,6 +12,7 @@ local List = require("libp.datatype.List")
 local VIter = require("libp.datatype.VIter")
 local KVIter = require("libp.datatype.KVIter")
 local OrderedDict = require("libp.datatype.OrderedDict")
+local uv = require("libp.fs.uv")
 local a = require("plenary.async")
 
 local open_opts
@@ -142,6 +143,7 @@ function M:_add_dir_node_children(node, abspath)
 		end)
 		:map(function(e)
 			e.abspath = path.join(abspath, e.name)
+			e.link = e.type == "link" and uv.fs_readlink(e.abspath)
 			return Node(e)
 		end)
 		:collect()
@@ -215,7 +217,8 @@ function M:draw(plain)
 			if e.type == "header" then
 				res = abbrev.path((" "):rep(e.level * 2) .. e.name, width)
 			else
-				res = abbrev.name((" "):rep(e.level * 2) .. e.name, width)
+				local name = e.type == "link" and ("%s -> %s"):format(e.name, e.link) or e.name
+				res = abbrev.name((" "):rep(e.level * 2) .. name, width)
 			end
 
 			if right then

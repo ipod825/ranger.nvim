@@ -16,12 +16,14 @@ function M:init(opts)
 	opts = opts or {}
 	vim.validate({
 		name = { opts.name, "s", true },
+		link = { opts.abspath, "s", true },
 		type = { opts.type, "s", true },
 		abspath = { opts.abspath, "s", true },
 		level = { opts.level, "n", true },
 	})
 	self.type = opts.type
 	self.name = opts.name
+	self.link = opts.link
 	self.abspath = opts.abspath
 	self.level = opts.level or -1
 	self.sorting_order = self.type and SortingOrder[self.type]
