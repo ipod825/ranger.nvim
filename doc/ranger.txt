@@ -1,1 +1,285 @@
 *ranger.txt* A file rowser plugin for neovim.
+
+CONTENTS                                *ranger-help-contents*
+
+Introduction  |ranger-introduction|
+Usage          |ranger-usage|
+  Commands       |ranger-commands|
+  Open buffer    |ranger-open-buffers|
+  Refresh buffer |ranger-refresh-buffers|
+  Key mappings   |ranger-key-mappings|
+  Menus          |ranger-menu|
+  Edit mode      |ranger-edit-mode|
+  Preview mode   |ranger-preview-mode|
+  Rifle          |ranger-rifle|
+  Interface      |ranger-interface|
+Customization  |ranger-customization|
+
+===============================================================================
+Introduction                                   *ranger-introduction*
+
+ranger.nvim is inspired by ranger (the console file manager) and is a rewrite
+of vim-netranger, which brings together the good-looking UI in ranger, native
+key-binding and editing power from vim. In the following of this document, we
+use ranger to refer this plugin instead of the original console file manager.
+
+===============================================================================
+USAGE                                   *ranger-usage*
+
+-------------------------------------------------------------------------------
+COMMANDS                                *ranger-commands*
+
+                                        *Ranger*
+:Ranger         Takes a single argument and open (with `open_cmd`, see
+                |ranger-customization|) it in a buffer.
+
+-------------------------------------------------------------------------------
+OPEN BUFFERS                            *ranger-open-buffers*
+
+To edit a directory, you can:
+1. Use the |Ranger| command.
+2. Alternatively, set `hijack_netrw` (see |ranger-customization|) to true. Then
+   editing a directory with any command (or directly from the terminal) is fine.
+3. Each ranger buffer, like neovim's buffer, is a view of the underlying
+   directory. Hence, you can open multiple buffers for the same directory.
+   Content of each buffer gets updated when the directory is modified
+   elsewhere.
+
+-------------------------------------------------------------------------------
+REFRESH BUFFERS                         *ranger-refresh-buffers*
+
+ranger detects file system events and automatically updates the buffer content.
+In cases that this doesn't work, executing |:edit| will force refresh the
+current buffer.
+
+-------------------------------------------------------------------------------
+KEY MAPPINGS                            *ranger-key-mappings*
+
+ranger provides default mappings in a directory buffer, most of which follow
+neovim's convention. See |ranger-customization| for adding customized mappings.
+Each default mapping maps to a function in the module `ranger.action`. Below we
+list the default mappings and their corresponding actions.
+
+Mappings                                Action
+
+`l`,`<right>`                               *ranger.action.open*
+Change directory/open file under cursor. If the file can be open by a system
+application specified by |ranger-rifle|, it defaults to open the file by the
+application. Otherwise, it defaults to open the file by the first argument of
+the open function, defaults to `edit`.
+
+`t`
+Open file in new tab.
+
+                                        *ranger.action.goto_parent*
+`h`,`<left>`
+Change to parent directory.
+
+`za`                                      *ranger.action.toggle_expand*
+Toggle expand current directory under cursor. See |za|.
+
+`/`                                       *ranger.action.search*
+Search for word in the current directory buffer. This brings up a |cmdline|-like
+floating window. The following mapping are defined in the floating window:
+                        Confirm search and Jump     <Cr>
+                        Cancel                      <Esc>, <C-c>
+                        Cursor Down                 <C-j>, <Down>
+                        Cursor Up                   <C-k>, <Up>
+
+
+`a`                                       *ranger.action.ask*
+Open file with with |ranger-menu| to select the application. See |ranger-rifle|.
+
+`L`                                       *ranger.action.set_cwd*
+Change window-local pwd to the directory of the entry under cursor. This is
+useful to set the destination of |ranger.action.transfer.paste| without entering
+the target directory.
+
+`o`
+Create new directory/file with |ranger-menu|. Save the change by ':w'. See
+|ranger-edit-mode|.
+
+`i`                                       *ranger.action.rename*
+Enter edit mode to rename file/directory names. Save the change by ':w'. See
+|ranger-edit-mode|.
+
+`v`                                       *ranger.action.transfer.toggle_select*
+Toggle select the current entry for further copy/cut.
+
+`[mode=v]v`
+Toggle select the visually selected entries for further copy/cut.
+
+`d`                                       *ranger.action.transfer.cut_selected*
+Cut all picked entries.
+
+`dd`                                      *ranger.action.transfer.cut_current*
+Cut the current entry.
+
+`y`                                       *ranger.action.transfer.copy_selected*
+Copy all selected entries.
+
+
+`yy`                                      *ranger.action.transfer.copy_current*
+Copy the current entry.
+
+`p`                                       *ranger.action.transfer.paste*
+Paste all cut/copied entries. The target directory is neovim's `getcwd()`
+output. Note that ranger by default sets window pwd to the viewed directory. But
+one could use |ranger.action.set_pwd| to temporary change it.
+
+`D`                                       *ranger.action.trash.trash_selected*
+Delete all picked entries.
+
+`DD`                                      *ranger.action.trash.trash_current*
+Delete the current entry.
+
+`u`                                       *ranger.action.trash.restore_last*
+Undo last delete.
+
+`zh`                                      *ranger.action.toggle_hidden*
+Toggle Show hidden files. This affects all ranger buffers.
+
+`S`                                       *ranger.action.sort*
+Sort content in current directory with |ranger-menu|.
+
+`S`                                       *ranger.preview.toggle*
+Toggle enter preview mode. See |ranger-preview-mode|. This affects all ranger
+buffers.
+
+
+-------------------------------------------------------------------------------
+MENU                                    *ranger-menu*
+
+ranger avoids unnatrural and hard to remember mappings by adding a user
+interface. Some actions like |ranger-action.sort| shows up a buffer listing
+options for user to select. You can press a single character to select the action
+to perform. Alternatively, you can move you cursor to an action and press enter
+(<cr>) to perform the action. If you close the buffer without pressing any keys,
+no action will be triggered.
+
+-------------------------------------------------------------------------------
+EDIT MODE                               *ranger-edit-mode*
+
+On |ranger-action.rename| mapping (default `i`) and
+|ranger-action.create_entries| mapping (default `o`), the current buffer enters
+edit mode. You can modify modify the content of the buffer using full neovim
+power (auto-completion, your favorite key mappings, etc.). To save changes in
+edit mode, just save the buffer, for e.g.  |:w|, |:x|, or |:wq|.
+
+-------------------------------------------------------------------------------
+PREVIEW MODE                            *ranger-preview-mode*
+
+By default, ranger previews the file under the cursor. One could disable
+preview by default by setting `preview_default_on` to `false`. To turn preview
+on/off on the fly, use |ranger.action.preview.toggle| mapping (default `P`).
+
+The size of the right panel can be customized by `preview_panel_width`.
+
+ranger will try to recognize the file type of the preview file. If it is
+not plain text file, such as .mp4, .pdf, .jpg, etc. It will not be displayed
+as plain text. Instead, some handlers will be used to preview it. If no
+handler is implemented, the default handler display the file path and its mime
+type. Current supported filetypes are:
+
+File Type   | Dependency
+image       | ueberzug[1]
+gif         | ueberzug[1], convert[2]
+pdf         | ueberzug[1], pdftoppm[3]
+
+[1] https://github.com/seebye/ueberzug
+[2] https://linux.die.net/man/1/convert
+[3] https://linux.die.net/man/1/pdftoppm
+
+-------------------------------------------------------------------------------
+RIFLE                                   *ranger-rifle*
+
+Rifle is a config file ranger used to open files with external program.
+ranger implements it with similar config syntax.  If you don't have a
+rifle.config file in `rifle_path`, ranger will copy a default one to
+that directory. You can simply modify the default `rifle.config` to serve your
+need. The first match (if any) in rifle.config is always adopted on
+|ranger.action.open|. To select alternative program or neovim, use
+|ranger.action.ask|.
+
+-------------------------------------------------------------------------------
+INTERFACE                               *ranger-interface*
+
+TBA
+
+
+===============================================================================
+CUSTOMIZATION                           *ranger-customization*
+
+All customization is done via the `ranger.setup` lua function. The default
+configuration is as below.
+
+```lua
+local action = require("ranger.action")
+
+require"ranger".setup {
+	-- The command name ranger defined.
+	command = "Ranger",
+	-- Set to true to enable editing directory with ranger by default.
+	hijack_netrw = false,
+	-- Default command to open directory buffer with "Ranger".
+	open_cmd = "edit",
+	-- The pattern defining the files to be hidden. Runtime behavior can be
+	-- toggled by `action.toggle_hidden`.
+	ignore_patterns = { "^%..*" },
+	-- The width of the preview panel. If smaller than 1, will be multipled by the window width.
+	preview_panel_width = 0.3,
+	-- Set to false to disable preview by default. Runtime behavior can be can
+	-- be toggled by `action.preview.toggle`.
+	preview_default_on = true,
+	-- Rifle configuration path.
+	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
+	-- Define the highlights. Currently not used.
+	highlights = {},
+	-- Define the entry highlights. Only the listed keys are valid. See
+	-- `nvim_set_hl` for valid value definition.
+	node_highlights = {
+		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
+		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
+		RangerCut = { ctermfg = "grey", fg = "#808080" },
+		RangerCopied = { ctermfg = 13, fg = "#ff00ff" },
+		RangerDir = { ctermfg = 26, fg = "#00afff" },
+		RangerFile = { ctermfg = "white", fg = "#ffffff" },
+		RangerLink = { ctermfg = 51, fg = "#00ffff" },
+		RangerExe = { ctermfg = 22, fg = "#005f00" },
+	},
+	mappings = {
+		-- To unmap predefined keys, set them to false. To add new mappings, set
+		-- a key to a lua function. For e.g., to unmap `h` and add a mapping hh:
+		--  h = false,
+		--  hh = function() end
+		n = {
+			h = action.goto_parent,
+			l = action.open,
+			L = action.set_cwd,
+			t = require("libp.functional").bind(action.open, "tabedit"),
+			a = action.ask,
+			za = action.toggle_expand,
+			zh = action.toggle_hidden,
+			v = action.transfer.toggle_select,
+			dd = action.transfer.cut_current,
+			d = action.transfer.cut_selected,
+			y = action.transfer.copy_selected,
+			yy = action.transfer.copy_current,
+			p = action.transfer.paste,
+			D = action.trash.trash_selected,
+			DD = action.trash.trash_current,
+			u = action.trash.restore_last,
+			i = action.rename,
+			o = action.create_entries,
+			P = action.preview.toggle,
+			S = action.sort,
+			["/"] = action.search,
+		},
+		v = {
+			v = action.transfer.toggle_select,
+		},
+	},
+}
+```
+
+vim:tw=78:et:ft=help:norl:

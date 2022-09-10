@@ -3,14 +3,24 @@ local action = require("ranger.action")
 return {
 	-- The command name ranger defined.
 	command = "Ranger",
+	-- Set to true to enable editing directory with ranger by default.
 	hijack_netrw = false,
+	-- Default command to open directory buffer with "Ranger".
 	open_cmd = "edit",
+	-- The pattern defining the files to be hidden. Runtime behavior can be
+	-- toggled by `action.toggle_hidden`.
 	ignore_patterns = { "^%..*" },
-	autochdir = true,
+	-- The width of the preview panel. If smaller than 1, will be multipled by the window width.
 	preview_panel_width = 0.3,
+	-- Set to false to disable preview by default. Runtime behavior can be can
+	-- be toggled by `action.preview.toggle`.
 	preview_default_on = true,
+	-- Rifle configuration path.
 	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
+	-- Define the highlights. Currently not used.
 	highlights = {},
+	-- Define the entry highlights. Only the listed keys are valid. See
+	-- `nvim_set_hl` for valid value definition.
 	node_highlights = {
 		RangerHeader = { ctermfg = "yellow", fg = "#ffff00" },
 		RangerSelected = { ctermfg = "yellow", fg = "#ffff00" },
