@@ -13,8 +13,10 @@ local path = require("libp.path")
 local Stack = require("libp.datatype.Stack")
 local Job = require("libp.Job")
 local uv = require("libp.fs.uv")
+local fs = require("libp.fs")
 local ui = require("libp.ui")
 local constants = require("libp.constants")
+local Set = require("libp.datatype.Set")
 
 local rifle
 function M.setup(opts)
@@ -92,7 +94,7 @@ function M.ask()
 	else
 		local commands = rifle:list_available_cmd(node.abspath)
 		local command = ui.Menu({
-			title = "Order",
+			title = "Open with",
 			content = commands,
 			short_key_map = constants.LOWER_ALPHABETS[{ 1, #commands }],
 		}):select()
@@ -166,6 +168,46 @@ function M.rename()
 				end
 			end
 			buffer:enable_fs_event_watcher()
+			buffer:rebuild_nodes()
+			buffer:draw()
+		end,
+	})
+end
+
+function M.create_entries()
+	local buffer = M.utils.get_cur_buffer_and_node()
+	local entry_type = ui.Menu({
+		title = "New entry type",
+		content = {
+			"directory",
+			"file",
+			"link",
+		},
+		short_key_map = { "d", "f", "l" },
+	}):select()
+
+	if not entry_type then
+		return
+	end
+
+	buffer:edit({
+		fill_lines = function()
+			buffer:draw(true)
+		end,
+		get_items = function()
+			return Set(buffer:get_lines())
+		end,
+		update = function(ori_items, new_items)
+			buffer:disable_fs_event_watcher()
+			for new_entry in Set.values(new_items - ori_items) do
+				if entry_type == "directory" then
+					uv.fs_mkdir(path.join(buffer.directory, new_entry), fs.stat_mode_num(750))
+				elseif entry_type == "file" then
+					fs.touch(path.join(buffer.directory, new_entry))
+				end
+			end
+			buffer:enable_fs_event_watcher()
+
 			buffer:rebuild_nodes()
 			buffer:draw()
 		end,

@@ -44,6 +44,7 @@ return {
 			DD = action.trash.trash_current,
 			u = action.trash.restore_last,
 			i = action.rename,
+			o = action.create_entries,
 			P = action.preview.toggle,
 			S = action.sort,
 			["/"] = action.search,
