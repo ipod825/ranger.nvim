@@ -1,7 +1,7 @@
 local M = require("libp.datatype.Class"):EXTEND()
 local List = require("libp.datatype.List")
 local values = require("libp.datatype.itertools").values
-local args = require("libp.utils.args")
+local args = require("libp.args")
 
 function M.cmp(a, b)
 	if a.sorting_order ~= b.sorting_order then

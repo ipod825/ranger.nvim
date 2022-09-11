@@ -201,7 +201,7 @@ function M.create_entries()
 			buffer:disable_fs_event_watcher()
 			for new_entry in Set.values(new_items - ori_items) do
 				if entry_type == "directory" then
-					uv.fs_mkdir(path.join(buffer.directory, new_entry), fs.stat_mode_num(750))
+					fs.mkdir(path.join(buffer.directory, new_entry))
 				elseif entry_type == "file" then
 					fs.touch(path.join(buffer.directory, new_entry))
 				end

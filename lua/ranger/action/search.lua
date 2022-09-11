@@ -78,17 +78,18 @@ function M.start()
 	})
 
 	local search_res
-	local handle
-	handle = function()
-		local pattern = cmdline:get_content()
-		if pattern then
-			M.draw_search_buffer(buffer, search_buffer, pattern)
-			local search_window_row = vimfn.getrow(search_window.id)
-			search_res = search_buffer:get_line(search_window_row)
-			vim.defer_fn(handle, 20)
-		end
-	end
-	vim.defer_fn(handle, 0)
+	functional.debounce({
+		body = function()
+			local pattern = cmdline:get_content()
+			if pattern then
+				M.draw_search_buffer(buffer, search_buffer, pattern)
+				local search_window_row = vimfn.getrow(search_window.id)
+				search_res = search_buffer:get_line(search_window_row)
+			end
+			return pattern
+		end,
+		wait_ms = 20,
+	})
 
 	local confirmed_search_res = cmdline:confirm()
 	search_window:close()

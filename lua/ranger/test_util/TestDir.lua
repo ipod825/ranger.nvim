@@ -2,7 +2,7 @@ local M = require("libp.datatype.Class"):EXTEND()
 local util = require("igit.test_util")
 local git = util.git
 local path = require("libp.path")
-local uv = vim.loop
+local fs = require("libp.fs")
 local a = require("plenary.async")
 
 function M:init(persist_dir)
@@ -87,7 +87,7 @@ function M:create_dir()
 		root = vim.fn.tempname()
 	end
 	util.jobrun(("rm -rf %s %s_bak"):format(root, root))
-	local succ = uv.fs_mkdir(root, 448)
+	local succ = fs.mkdir(root)
 	assert(succ, succ)
 	local run = function(cmd)
 		util.jobrun(cmd, { cwd = root })
