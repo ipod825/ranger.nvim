@@ -330,7 +330,7 @@ function M:_config_new(dir_name, opts)
 	vim.api.nvim_create_autocmd("CursorMoved", {
 		buffer = self.id,
 		callback = function()
-			if self:is_editing() then
+			if self:is_editing() or vim.fn.mode() ~= "n" then
 				return
 			end
 			local new_row = vimfn.getrow()
