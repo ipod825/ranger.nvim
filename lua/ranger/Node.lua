@@ -1,6 +1,6 @@
 local M = require("libp.datatype.Class"):EXTEND()
 local List = require("libp.datatype.List")
-local values = require("libp.datatype.itertools").values
+local values = require("libp.itertools").values
 local args = require("libp.args")
 
 function M.cmp(a, b)

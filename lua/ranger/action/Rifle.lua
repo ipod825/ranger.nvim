@@ -4,7 +4,7 @@ local constants = require("ranger.constants")
 local vimfn = require("libp.utils.vimfn")
 local List = require("libp.datatype.List")
 local osfn = require("libp.utils.osfn")
-local itt = require("libp.datatype.itertools")
+local itt = require("libp.itertools")
 local a = require("plenary.async")
 
 function M.Rule(fn, ...)

@@ -4,7 +4,7 @@ local vimfn = require("libp.utils.vimfn")
 local VIter = require("libp.datatype.VIter")
 local functional = require("libp.functional")
 local List = require("libp.datatype.List")
-local itt = require("libp.datatype.itertools")
+local itt = require("libp.itertools")
 
 local function bisect_trunc(s, w)
 	if #s == 0 then

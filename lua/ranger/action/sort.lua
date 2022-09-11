@@ -3,7 +3,7 @@ local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
 local uv = vim.loop
 local vimfn = require("libp.utils.vimfn")
-local itt = require("libp.datatype.itertools")
+local itt = require("libp.itertools")
 
 local Order = { ASCENDING = 1, DESCENDING = 2 }
 
