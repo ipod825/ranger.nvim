@@ -114,6 +114,7 @@ function M.cut_selected()
 		if node then
 			controller:set(node, State.CUT)
 		else
+			add_managed_buffer(buffer, State.CUT)
 			buffer:draw()
 		end
 		maybe_recycle_managed_buffers(buffer, State.SELECTED)
@@ -125,6 +126,7 @@ function M.copy_selected()
 		if node then
 			controller:set(node, State.COPIED)
 		else
+			add_managed_buffer(buffer, State.COPY)
 			buffer:draw()
 		end
 		maybe_recycle_managed_buffers(buffer, State.SELECTED)
@@ -163,7 +165,8 @@ function M.paste()
 	local dest_dir = vim.fn.getcwd()
 	for buffer, controller, node in M.copied_nodes() do
 		if node then
-			local _, err = fs.copy(node.abspath, path.join(dest_dir, node.name), { excl = true, ficlone = true })
+			local _, err =
+				fs.copy(node.abspath, path.join(dest_dir, path.basename(node.abspath)), { excl = true, ficlone = true })
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)
@@ -180,7 +183,7 @@ function M.paste()
 	for buffer, controller, node in M.cut_nodes() do
 		buffer:disable_fs_event_watcher()
 		if node then
-			local _, err = uv.fs_rename(node.abspath, path.join(dest_dir, node.name))
+			local _, err = uv.fs_rename(node.abspath, path.join(dest_dir, path.basename(node.abspath)))
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)
