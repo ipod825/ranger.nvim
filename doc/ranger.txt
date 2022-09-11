@@ -1,4 +1,4 @@
-*ranger.txt* A file rowser plugin for neovim.
+*ranger.txt* A file rowser plugin for neovim.           *ranger*
 
 CONTENTS                                *ranger-help-contents*
 
@@ -185,10 +185,12 @@ File Type   | Dependency
 image       | ueberzug[1]
 gif         | ueberzug[1], convert[2]
 pdf         | ueberzug[1], pdftoppm[3]
+video       | ueberzug[1], ffmpegthumbnailer[4]
 
 [1] https://github.com/seebye/ueberzug
 [2] https://linux.die.net/man/1/convert
 [3] https://linux.die.net/man/1/pdftoppm
+[3] https://github.com/dirkvdb/ffmpegthumbnailer
 
 -------------------------------------------------------------------------------
 RIFLE                                   *ranger-rifle*
