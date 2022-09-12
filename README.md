@@ -40,7 +40,7 @@ use({
 
 ## Screen Shot
 * Copy/Cut/Paste in multiple windows
-![copy_cut_paste](https://user-images.githubusercontent.com/1246394/189579767-a2b5e177-e35d-4aa2-8705-adb59d13691a.gif)
+![copy_cut_paste](https://user-images.githubusercontent.com/1246394/189580388-793f7bb3-d7c3-4497-a3f3-6fbc7193ab0c.gif)
 * Preview/Panel mode
 ![preview_mode](https://user-images.githubusercontent.com/1246394/189579801-22d23a08-03ee-41cc-96c1-3f94bb746995.gif)
 * Inline Rename
