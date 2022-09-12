@@ -1,5 +1,4 @@
 local M = require("libp.ui.Buffer"):EXTEND()
-local ui = require("libp.ui")
 local Node = require("ranger.Node")
 local Watcher = require("libp.fs.Watcher")
 local vimfn = require("libp.utils.vimfn")
@@ -8,12 +7,12 @@ local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.itertools")
 local abbrev = require("ranger.abbrev")
-local List = require("libp.datatype.List")
 local VIter = require("libp.datatype.VIter")
 local KVIter = require("libp.datatype.KVIter")
 local OrderedDict = require("libp.datatype.OrderedDict")
 local uv = require("libp.fs.uv")
 local a = require("plenary.async")
+local devicon = require("libp.integration.web_devicon")
 
 local open_opts
 function M.setup(opts)
@@ -181,9 +180,9 @@ function M:add_right_display(key, fn)
 	self._right_display[key] = fn
 end
 
-function M:add_left_display(fn)
-	self._left_display = self._left_display or List()
-	self._left_display:append(fn)
+function M:add_left_display(key, fn)
+	self._left_display = self._left_display or OrderedDict()
+	self._left_display[key] = fn
 end
 
 -- Set content and highlight assuming the nodes (which the content were based
@@ -209,12 +208,22 @@ function M:draw(plain)
 				width = width - vim.fn.strwidth(right)
 			end
 
+			local left = (" "):rep(e.level * 2)
+			if self._left_display then
+				for fn in OrderedDict.values(self._left_display) do
+					left = left .. fn(e)
+				end
+			end
+			width = width - vim.fn.strwidth(left)
+
 			if e.type == "header" then
-				res = abbrev.path((" "):rep(e.level * 2) .. e.name, width)
+				res = abbrev.path(e.name, width)
 			else
 				local name = e.type == "link" and ("%s -> %s"):format(e.name, e.link) or e.name
-				res = abbrev.name((" "):rep(e.level * 2) .. name, width)
+				res = abbrev.name(name, width)
 			end
+
+			res = left .. res
 
 			if right then
 				res = res .. right
@@ -325,6 +334,16 @@ function M:_config_new(dir_name, opts)
 	self:_add_fs_event_watcher(self.directory)
 	self:enable_fs_event_watcher()
 	self:rebuild_nodes()
+
+	self:add_left_display("devicon", function(node)
+		if node.type == "header" then
+			return ""
+		elseif node.type == "directory" then
+			return Set.has(self.expanded_abspaths, node.abspath) and " " or " "
+		end
+		return devicon.get(node.name).icon .. " "
+	end)
+
 	self:draw()
 
 	vim.api.nvim_create_autocmd("CursorMoved", {
