@@ -80,11 +80,14 @@ function M.open(open_cmd)
 end
 
 function M.set_cwd()
-	local _, node = M.utils.get_cur_buffer_and_node()
-	if node.type ~= "directory" then
-		return
+	local buffer, node = M.utils.get_cur_buffer_and_node()
+	if node.type == "header" then
+		vimfn.set_cwd(buffer.directory)
+	elseif node.type == "directory" then
+		vimfn.set_cwd(node.abspath)
+	else
+		vimfn.set_cwd(path.dirname(node.abspath))
 	end
-	vimfn.set_cwd(node.abspath)
 end
 
 function M.ask()
@@ -181,9 +184,8 @@ function M.create_entries()
 		content = {
 			"directory",
 			"file",
-			"link",
 		},
-		short_key_map = { "d", "f", "l" },
+		short_key_map = { "d", "f" },
 	}):select()
 
 	if not entry_type then
@@ -201,9 +203,9 @@ function M.create_entries()
 			buffer:disable_fs_event_watcher()
 			for new_entry in Set.values(new_items - ori_items) do
 				if entry_type == "directory" then
-					fs.mkdir(path.join(buffer.directory, new_entry))
+					fs.mkdir(path.join(vim.fn.getcwd(), new_entry))
 				elseif entry_type == "file" then
-					fs.touch(path.join(buffer.directory, new_entry))
+					fs.touch(path.join(vim.fn.getcwd(), new_entry))
 				end
 			end
 			buffer:enable_fs_event_watcher()
