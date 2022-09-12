@@ -335,14 +335,16 @@ function M:_config_new(dir_name, opts)
 	self:enable_fs_event_watcher()
 	self:rebuild_nodes()
 
-	self:add_left_display("devicon", function(node)
-		if node.type == "header" then
-			return ""
-		elseif node.type == "directory" then
-			return Set.has(self.expanded_abspaths, node.abspath) and " " or " "
-		end
-		return devicon.get(node.name).icon .. " "
-	end)
+	if opts.enable_devicon then
+		self:add_left_display("devicon", function(node)
+			if node.type == "header" then
+				return ""
+			elseif node.type == "directory" then
+				return Set.has(self.expanded_abspaths, node.abspath) and " " or " "
+			end
+			return devicon.get(node.name).icon .. " "
+		end)
+	end
 
 	self:draw()
 

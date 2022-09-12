@@ -17,6 +17,8 @@ return {
 	preview_default_on = true,
 	-- Rifle configuration path.
 	rifle_path = vim.fn.stdpath("data") .. "/rifle.conf",
+	-- Whether to enable devicon.
+	enable_devicon = true,
 	-- Define the highlights. Currently not used.
 	highlights = {},
 	-- Define the entry highlights. Only the listed keys are valid. See
