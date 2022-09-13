@@ -79,6 +79,12 @@ function M.open(open_cmd)
 	end
 end
 
+function M.open_tab_bg()
+	local tabpage = vim.api.nvim_get_current_tabpage()
+	M.open("tabedit")
+	vim.api.nvim_set_current_tabpage(tabpage)
+end
+
 function M.set_cwd()
 	local buffer, node = M.utils.get_cur_buffer_and_node()
 	if node.type == "header" then

@@ -43,6 +43,7 @@ return {
 			l = action.open,
 			L = action.set_cwd,
 			t = require("libp.functional").bind(action.open, "tabedit"),
+			T = action.open_tab_bg,
 			a = action.ask,
 			za = action.toggle_expand,
 			zh = action.toggle_hidden,
