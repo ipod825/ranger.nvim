@@ -15,12 +15,13 @@ vim.api.nvim_create_autocmd("VimEnter", {
 	group = vim.api.nvim_create_augroup("ranger_trash_vimenter", {}),
 	callback = function()
 		a.void(function()
-			local _, err = fs.rmdir(trash_dir)
-			if err then
-				vimfn.error(err)
-			else
-				fs.mkdir(trash_dir)
+			if fs.is_directory(trash_dir) then
+				local _, err = fs.rmdir(trash_dir)
+				if err then
+					vimfn.error(err)
+				end
 			end
+			fs.mkdir(trash_dir)
 		end)()
 	end,
 })
