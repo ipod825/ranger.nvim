@@ -2,7 +2,7 @@ local M = {}
 local utils = require("ranger.action.utils")
 local vimfn = require("libp.utils.vimfn")
 local Set = require("libp.datatype.Set")
-local path = require("libp.path")
+local pathfn = require("libp.utils.pathfn")
 local a = require("plenary.async")
 local uv = require("libp.fs.uv")
 local fs = require("libp.fs")
@@ -165,7 +165,7 @@ function M.paste()
 	local dest_dir = vim.fn.getcwd()
 	for buffer, controller, node in M.copied_nodes() do
 		if node then
-			local _, err = fs.copy(node.abspath, path.join(dest_dir, node.name), { excl = true, ficlone = true })
+			local _, err = fs.copy(node.abspath, pathfn.join(dest_dir, node.name), { excl = true, ficlone = true })
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)
@@ -182,7 +182,7 @@ function M.paste()
 	for buffer, controller, node in M.cut_nodes() do
 		buffer:disable_fs_event_watcher()
 		if node then
-			local _, err = uv.fs_rename(node.abspath, path.join(dest_dir, node.name))
+			local _, err = uv.fs_rename(node.abspath, pathfn.join(dest_dir, node.name))
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)

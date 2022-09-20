@@ -2,7 +2,7 @@ local M = require("libp.ui.Buffer"):EXTEND()
 local Node = require("ranger.Node")
 local Watcher = require("libp.fs.Watcher")
 local vimfn = require("libp.utils.vimfn")
-local path = require("libp.path")
+local pathfn = require("libp.utils.pathfn")
 local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
 local itt = require("libp.itertools")
@@ -64,8 +64,8 @@ function M.open(dir_name, opts)
 	local ori_dir_name = dir_name
 
 	dir_name = dir_name:gsub("^~", os.getenv("HOME"))
-	if not vim.startswith(dir_name, path.path_sep) then
-		local rel_dir_name = path.join(vim.fn.getcwd(), dir_name)
+	if not vim.startswith(dir_name, pathfn.path_sep) then
+		local rel_dir_name = pathfn.join(vim.fn.getcwd(), dir_name)
 		if vim.fn.isdirectory(rel_dir_name) == 1 then
 			dir_name = rel_dir_name
 		end
@@ -136,7 +136,7 @@ function M:_add_dir_node_children(node, abspath)
 			return true
 		end)
 		:map(function(e)
-			e.abspath = path.join(abspath, e.name)
+			e.abspath = pathfn.join(abspath, e.name)
 			e.link = e.type == "link" and uv.fs_readlink(e.abspath)
 			return Node(e)
 		end)

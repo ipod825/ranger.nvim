@@ -9,7 +9,7 @@ local M = {
 local Rifle = require("ranger.action.Rifle")
 local Buffer = require("ranger.Buffer")
 local vimfn = require("libp.utils.vimfn")
-local path = require("libp.path")
+local pathfn = require("libp.utils.pathfn")
 local Stack = require("libp.datatype.Stack")
 local Job = require("libp.Job")
 local uv = require("libp.fs.uv")
@@ -43,12 +43,12 @@ end
 
 function M.goto_parent()
 	local buffer = M.utils.get_cur_buffer_and_node()
-	if path.dirname(buffer.directory) == buffer.directory then
+	if pathfn.dirname(buffer.directory) == buffer.directory then
 		return
 	end
-	local new_buffer, new = Buffer.open(path.dirname(buffer.directory), { open_cmd = "edit" })
+	local new_buffer, new = Buffer.open(pathfn.dirname(buffer.directory), { open_cmd = "edit" })
 	if new then
-		local target_name = path.basename(buffer.directory)
+		local target_name = pathfn.basename(buffer.directory)
 		for i, new_node in ipairs(new_buffer:nodes()) do
 			if new_node.name == target_name then
 				if vim.api.nvim_get_current_buf() == new_buffer.id then
@@ -92,7 +92,7 @@ function M.set_cwd()
 	elseif node.type == "directory" then
 		vimfn.set_cwd(node.abspath)
 	else
-		vimfn.set_cwd(path.dirname(node.abspath))
+		vimfn.set_cwd(pathfn.dirname(node.abspath))
 	end
 end
 
@@ -146,7 +146,7 @@ function M.rename()
 					stack:push(vim.trim(lines[i]))
 					level_stack:push(cur_level)
 					res[cur_level] = res[cur_level] or {}
-					table.insert(res[cur_level], path.join(unpack(stack)))
+					table.insert(res[cur_level], pathfn.join(unpack(stack)))
 				end
 			end
 			return res
@@ -172,7 +172,7 @@ function M.rename()
 				for i, new_item in ipairs(new_items[level]) do
 					uv.fs_rename(
 						ori_items[level][i] .. "copy",
-						path.join(path.dirname(ori_items[level][i]), path.basename(new_item))
+						pathfn.join(pathfn.dirname(ori_items[level][i]), pathfn.basename(new_item))
 					)
 				end
 			end
@@ -209,9 +209,9 @@ function M.create_entries()
 			buffer:disable_fs_event_watcher()
 			for new_entry in Set.values(new_items - ori_items) do
 				if entry_type == "directory" then
-					fs.mkdir(path.join(vim.fn.getcwd(), new_entry))
+					fs.mkdir(pathfn.join(vim.fn.getcwd(), new_entry))
 				elseif entry_type == "file" then
-					fs.touch(path.join(vim.fn.getcwd(), new_entry))
+					fs.touch(pathfn.join(vim.fn.getcwd(), new_entry))
 				end
 			end
 			buffer:enable_fs_event_watcher()

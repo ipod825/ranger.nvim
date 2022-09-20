@@ -1,7 +1,7 @@
 local M = {}
 local utils = require("ranger.action.utils")
 local transfer = require("ranger.action.transfer")
-local path = require("libp.path")
+local pathfn = require("libp.utils.pathfn")
 local Set = require("libp.datatype.Set")
 local Job = require("libp.Job")
 
@@ -82,13 +82,13 @@ function M.restore_last()
 	local cmds = {}
 	for abspath in Set.values(restore_paths) do
 		if file_version[abspath] == 1 then
-			table.insert(cmds, { "gio", "trash", "--restore", "trash:///" .. path.basename(abspath) })
+			table.insert(cmds, { "gio", "trash", "--restore", "trash:///" .. pathfn.basename(abspath) })
 		else
 			table.insert(cmds, {
 				"gio",
 				"trash",
 				"--restore",
-				("trash:///%s.%d"):format(path.basename(abspath), file_version[abspath]),
+				("trash:///%s.%d"):format(pathfn.basename(abspath), file_version[abspath]),
 			})
 		end
 	end

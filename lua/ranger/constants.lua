@@ -1,8 +1,8 @@
 local M = {}
 local reflection = require("libp.debug.reflection")
-local path = require("libp.path")
+local pathfn = require("libp.utils.pathfn")
 
-M.config_dir = path.join(reflection.script_dir(), "..", "..", "config")
-M.default_rifle_conf = path.join(M.config_dir, "rifle.conf")
+M.config_dir = pathfn.join(reflection.script_dir(), "..", "..", "config")
+M.default_rifle_conf = pathfn.join(M.config_dir, "rifle.conf")
 
 return M

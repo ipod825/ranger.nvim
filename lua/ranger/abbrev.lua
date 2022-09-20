@@ -86,7 +86,7 @@ function M.path(path, width)
 			for j in itt.range(i) do
 				sp[j] = sp[j]:sub(1, 1)
 			end
-			return require("libp.path").join_array(sp)
+			return require("libp.utils.pathfn").join_array(sp)
 		else
 			total = total + #sp[i] - 1
 		end
