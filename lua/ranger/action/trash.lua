@@ -102,7 +102,9 @@ function M.restore_last()
 	a.util.join(path_tuples:map(function(e)
 		return a.wrap(function(cb)
 			local ori_path, trash_path = unpack(e)
-			-- if not fs.is_directory(pathfn.dirname(ori_path))
+			if not fs.is_directory(pathfn.dirname(ori_path)) then
+				vim.fn.mkdir(pathfn.dirname(ori_path), "p")
+			end
 			uv.fs_rename(trash_path, ori_path)
 			cb()
 		end, 1)
