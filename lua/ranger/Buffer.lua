@@ -320,8 +320,10 @@ end
 
 function M:_remove_rebuild_fs_watcher(directory)
 	local watcher = self._build_and_draw_watchers[directory]
-	watcher:stop()
-	self._build_and_draw_watchers[directory] = nil
+	if watcher then
+		watcher:stop()
+		self._build_and_draw_watchers[directory] = nil
+	end
 end
 
 function M:_config_new(dir_name, opts)
