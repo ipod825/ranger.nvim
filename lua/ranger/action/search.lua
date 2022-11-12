@@ -11,11 +11,6 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 	pattern = pattern or ""
 
 	local nodes = buffer.root:flatten_children()
-	if buffer._reanger_search == pattern then
-		return
-	end
-	buffer._reanger_search = pattern
-
 	local re_pattern = vim.regex(pattern)
 	local find = function(name)
 		local beg, ends = re_pattern:match_str(name)
@@ -71,10 +66,11 @@ function M.start()
 	})
 
 	local search_res
+	local last_pattern
 	functional.debounce({
 		body = function()
 			local pattern = cmdline:get_content()
-			if pattern then
+			if pattern ~= last_pattern then
 				M.draw_search_buffer(buffer, search_buffer, pattern)
 				local search_window_row = vimfn.getrow(search_window.id)
 				search_res = search_buffer:get_line(search_window_row)
