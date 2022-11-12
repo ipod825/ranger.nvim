@@ -7,27 +7,20 @@ local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
 local functional = require("libp.functional")
 
-function M.draw_search_buffer(buffer, search_buffer, substr)
-	substr = substr or ""
+function M.draw_search_buffer(buffer, search_buffer, pattern)
+	pattern = pattern or ""
 
 	local nodes = buffer.root:flatten_children()
-	if buffer._reanger_search == substr then
+	if buffer._reanger_search == pattern then
 		return
 	end
-	buffer._reanger_search = substr
+	buffer._reanger_search = pattern
 
-	local ignore_case = (vim.o.smartcase and not substr:match("%u")) or vim.o.ignorecase
-
-	local find
-	if ignore_case then
-		substr = ("(%s)"):format(substr:lower())
-		find = function(name)
-			return name:lower():find(substr)
-		end
-	else
-		substr = ("(%s)"):format(substr)
-		find = function(name)
-			return name:find(substr)
+	local re_pattern = vim.regex(pattern)
+	local find = function(name)
+		local beg, ends = re_pattern:match_str(name)
+		if beg then
+			return beg + 1, ends
 		end
 	end
 
