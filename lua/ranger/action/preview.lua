@@ -15,10 +15,10 @@ local preview_width
 local is_previewing
 
 function M.setup(opts)
-	local editable_width = vimfn.editable_width(0)
+	local columns = vim.o.columns
 	panel_width = opts.preview_panel_width > 1 and opts.preview_panel_width
-		or math.floor(editable_width * opts.preview_panel_width)
-	preview_width = editable_width - panel_width
+		or math.floor(columns * opts.preview_panel_width)
+	preview_width = columns - panel_width
 	is_previewing = opts.preview_default_on
 	if is_previewing then
 		Buffer.set_init_win_width(panel_width)
@@ -50,13 +50,13 @@ function M.toggle()
 		M.preview()
 	else
 		M.close_all_preview_windows_in_current_tabpage()
-		buffer:set_win_width_maybe_redraw(vimfn.editable_width(0))
+		buffer:set_win_width_maybe_redraw(vim.o.columns)
 	end
 
 	if is_previewing then
 		Buffer.set_init_win_width(panel_width)
 	else
-		Buffer.set_init_win_width(vimfn.editable_width(0))
+		Buffer.set_init_win_width(vim.o.columns)
 	end
 end
 
@@ -124,6 +124,14 @@ function M.preview()
 
 			vim.cmd(("noautocmd rightbelow vert %d vsplit"):format(preview_width))
 			local previewee_win = vim.api.nvim_get_current_win()
+			-- Ranger buffer renders wrongly if there's any gutter. These window
+			-- options are only set on first time entering the window (after the
+			-- buffer is shown). We thus manually set them here.
+			if node.type == "directory" then
+				vim.api.nvim_win_set_option(previewee_win, "wrap", false)
+				vim.api.nvim_win_set_option(previewee_win, "number", false)
+				vim.api.nvim_win_set_option(previewee_win, "relativenumber", false)
+			end
 			vim.api.nvim_win_set_buf(previewee_win, previewee_buffer.id)
 			vim.api.nvim_win_set_var(previewee_win, "ranger_previewer", previewer_win)
 

@@ -25,16 +25,10 @@ function M:_on_open_focused()
 		self._ever_open_focused = true
 		-- Puts the cursor on the row after the header.
 		vimfn.setrow(2)
-		-- TODO(smwang): The API has bugs that sets the global values
+		-- TODO(smwang): nvim_win_set_option API has bugs that sets the global values
 		-- vim.api.nvim_win_set_option(0, "scrolloff", 0)
-		-- vim.api.nvim_win_set_option(0, "sidescrolloff", 0)
-		-- vim.api.nvim_win_set_option(0, "wrap", false)
-		-- vim.api.nvim_win_set_option(0, "spell", false)
-		-- vim.api.nvim_win_set_option(0, "cursorline", false)
-		-- vim.api.nvim_win_set_option(0, "foldcolumn", "0")
-		-- vim.api.nvim_win_set_option(0, "foldenable", false)
-		-- vim.api.nvim_win_set_option(0, "foldmethod", "manual")
-		-- vim.api.nvim_win_set_option(0, "list", false)
+		vim.cmd("setlocal nonumber")
+		vim.cmd("setlocal norelativenumber")
 		vim.cmd("setlocal scrolloff=0")
 		vim.cmd("setlocal sidescrolloff=0")
 		vim.cmd("setlocal nowrap")
@@ -47,7 +41,7 @@ function M:_on_open_focused()
 	end
 end
 
-local init_win_width = vimfn.editable_width(0)
+local init_win_width = vim.o.columns
 function M.set_init_win_width(width)
 	init_win_width = width
 end
@@ -106,7 +100,7 @@ function M.open(dir_name, opts)
 		buffer:_config_new(dir_name, opts)
 		buffer:set_mappings(opts.mappings)
 	else
-		opts.win_width = opts.win_width or vimfn.editable_width(0)
+		opts.win_width = opts.win_width or vim.o.columns
 		buffer:set_win_width_maybe_redraw(opts.win_width)
 	end
 
