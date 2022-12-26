@@ -13,6 +13,7 @@ local OrderedDict = require("libp.datatype.OrderedDict")
 local uv = require("libp.fs.uv")
 local a = require("plenary.async")
 local devicon = require("libp.integration.web_devicon")
+local throttle = require("libp.utils.throttle")
 
 local open_opts
 function M.setup(opts)
@@ -292,21 +293,22 @@ end
 function M:_add_fs_event_watcher(directory)
 	self._build_and_draw_watchers = self._build_and_draw_watchers or {}
 
-	assert(self._build_and_draw_watchers[directory] == nil)
+	assert(self._build_and_draw_watchers[directory] == nil, "")
 	if self._build_and_draw_watchers[directory] then
 		return
 	end
 
 	local bid = self.id
+	local on_fs_update = a.void(throttle.max_per_second(1, function()
+		self:rebuild_nodes()
+		self:draw()
+	end))
 	self._build_and_draw_watchers[directory] = Watcher(directory, function()
 		if not vim.api.nvim_buf_is_valid(bid) or not fs.is_directory(directory) then
 			self:_remove_rebuild_fs_watcher(directory)
 		else
 			if self._watch_fs_event then
-				a.void(function()
-					self:rebuild_nodes()
-					self:draw()
-				end)()
+				on_fs_update()
 			end
 		end
 	end)
