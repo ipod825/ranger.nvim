@@ -12,8 +12,10 @@ ranger
 ## Installation
 ------------
 
-Use you preferred package manager. Below we use [packer.nvim](https://github.com/wbthomason/packer.nvim) as an example.
+Use you preferred package manager. Below we use [packer.nvim](https://github.com/wbthomason/packer.nvim) as an example and [VimPlug](https://github.com/junegunn/vim-plug) as an example.
 
+
+packer
 ```lua
 use {'nvim-lua/plenary.nvim'}
 use {'ipod825/libp.nvim'}
@@ -24,16 +26,14 @@ use {
 	end,
 }
 ```
-or
 
-```lua
-use({
-	"ipod825/ranger.nvim",
-	requires = { "nvim-lua/plenary.nvim", "ipod825/libp.nvim" },
-	config = function()
-		require("ranger").setup()
-	end,
-})
+VimPlug
+```vim
+Plug 'ipod825/libp.nvim'
+Plug 'ipod825/ranger.nvim'
+lua << EOF
+require("ranger").setup()
+EOF
 ```
 
 ## Usage
