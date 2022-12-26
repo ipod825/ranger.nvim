@@ -7,6 +7,7 @@ ranger
 ## Dependency
 1. [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 2. [libp.nvim](https://github.com/ipod825/libp.nvim)
+3. [nerd-font](https://github.com/ryanoasis/nerd-fonts#font-installation)
 
 ## Installation
 ------------
