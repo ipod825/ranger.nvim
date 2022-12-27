@@ -152,6 +152,18 @@ function M.rename()
 			return res
 		end,
 		update = function(ori_items, new_items)
+			for level = #new_items, 0, -1 do
+				local ori_items_set = Set(ori_items[level])
+				local new_items_set = Set(new_items[level])
+				if Set.size(ori_items_set) ~= Set.size(new_items_set) then
+					vimfn.error(
+						"Aborting! Multiple files are named the same after renaming! This might cause data lose. Do it separately."
+					)
+					buffer:draw()
+					return
+				end
+			end
+
 			buffer:disable_fs_event_watcher()
 			-- We start from the bottom level because otherwise the source path
 			-- for bottom levels would become invalid when we rename the top
@@ -160,8 +172,10 @@ function M.rename()
 				-- Rename in two steps to avoid the case that the target name is in the same directory. For e.g.:
 				-- `mv a b; mv b a` would not swap a and b. Instead, we should do:
 				-- `mv a atmp; mv b btmp; mv atmp b; mv btmp a`.
-				for _, ori_item in ipairs(ori_items[level]) do
-					uv.fs_rename(ori_item, ori_item .. "copy")
+				for i, ori_item in ipairs(ori_items[level]) do
+					if ori_item ~= new_items[level][i] then
+						uv.fs_rename(ori_item, ori_item .. "copy")
+					end
 				end
 
 				-- For the target name, we don't use new_item directly as its
@@ -170,10 +184,12 @@ function M.rename()
 				-- directory name is invalid at the point when we try to rename
 				-- the new_item as we rename from bottom levels to top levels.
 				for i, new_item in ipairs(new_items[level]) do
-					uv.fs_rename(
-						ori_items[level][i] .. "copy",
-						pathfn.join(pathfn.dirname(ori_items[level][i]), pathfn.basename(new_item))
-					)
+					if new_item ~= ori_items[level][i] then
+						uv.fs_rename(
+							ori_items[level][i] .. "copy",
+							pathfn.join(pathfn.dirname(ori_items[level][i]), pathfn.basename(new_item))
+						)
+					end
 				end
 			end
 			buffer:enable_fs_event_watcher()
