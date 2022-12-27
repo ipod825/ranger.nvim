@@ -157,7 +157,8 @@ function M.copy_current()
 	buffer:draw()
 end
 
-function M.paste()
+function M.paste(opts)
+	opts = vim.tbl_extend("keep", opts or {}, { copy_fn = fs.copy, rename_fn = uv.fs_rename })
 	local cur_buffer = utils.get_cur_buffer_and_node()
 	cur_buffer:disable_fs_event_watcher()
 
@@ -165,7 +166,7 @@ function M.paste()
 	local dest_dir = vim.fn.getcwd()
 	for buffer, controller, node in M.copied_nodes() do
 		if node then
-			local _, err = fs.copy(node.abspath, pathfn.join(dest_dir, node.name), { excl = true, ficlone = true })
+			local _, err = opts.copy_fn(node.abspath, pathfn.join(dest_dir, node.name), { excl = true, ficlone = true })
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)
@@ -182,7 +183,7 @@ function M.paste()
 	for buffer, controller, node in M.cut_nodes() do
 		buffer:disable_fs_event_watcher()
 		if node then
-			local _, err = uv.fs_rename(node.abspath, pathfn.join(dest_dir, node.name))
+			local _, err = opts.rename_fn(node.abspath, pathfn.join(dest_dir, node.name))
 			a.util.scheduler()
 			if err then
 				table.insert(errors, err)
