@@ -113,7 +113,9 @@ function M.ask()
 	end
 end
 
-function M.rename()
+function M.rename(rename_fn)
+	rename_fn = rename_fn or uv.fs_rename
+
 	local buffer = M.utils.get_cur_buffer_and_node()
 	buffer:edit({
 		fill_lines = function()
@@ -174,7 +176,7 @@ function M.rename()
 				-- `mv a atmp; mv b btmp; mv atmp b; mv btmp a`.
 				for i, ori_item in ipairs(ori_items[level]) do
 					if ori_item ~= new_items[level][i] then
-						uv.fs_rename(ori_item, ori_item .. "copy")
+						rename_fn(ori_item, ori_item .. "ranger_temp_copy")
 					end
 				end
 
@@ -185,8 +187,8 @@ function M.rename()
 				-- the new_item as we rename from bottom levels to top levels.
 				for i, new_item in ipairs(new_items[level]) do
 					if new_item ~= ori_items[level][i] then
-						uv.fs_rename(
-							ori_items[level][i] .. "copy",
+						rename_fn(
+							ori_items[level][i] .. "ranger_temp_copy",
 							pathfn.join(pathfn.dirname(ori_items[level][i]), pathfn.basename(new_item))
 						)
 					end
