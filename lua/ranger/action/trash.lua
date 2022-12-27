@@ -28,6 +28,21 @@ vim.api.nvim_create_autocmd("VimEnter", {
 
 M._history = Stack()
 
+local function cross_device_rename(src, dst)
+	local _, err = uv.fs_rename(src, dst)
+	if err then
+		_, err = fs.copy(src, dst)
+		if err then
+			return nil, err
+		end
+		_, err = fs.rm(src)
+		if err then
+			return nil, err
+		end
+	end
+	return true
+end
+
 function M._trash_single(file_path)
 	local trash_path
 	local basename = pathfn.basename(file_path)
@@ -35,7 +50,7 @@ function M._trash_single(file_path)
 		trash_path = ("%s/%s%s"):format(trash_dir, basename, pathfn.randomAlphaNumerical(10))
 	until not fs.is_readable(trash_path)
 
-	local _, err = uv.fs_rename(file_path, trash_path)
+	local _, err = cross_device_rename(file_path, trash_path)
 	if err then
 		vimfn.error(err)
 		return
@@ -105,7 +120,7 @@ function M.restore_last()
 			if not fs.is_directory(pathfn.dirname(ori_path)) then
 				vim.fn.mkdir(pathfn.dirname(ori_path), "p")
 			end
-			uv.fs_rename(trash_path, ori_path)
+			cross_device_rename(trash_path, ori_path)
 			cb()
 		end, 1)
 	end))
