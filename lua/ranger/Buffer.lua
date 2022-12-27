@@ -303,8 +303,13 @@ function M:_add_fs_event_watcher(directory)
 		self:rebuild_nodes()
 		self:draw()
 	end))
+
 	self._build_and_draw_watchers[directory] = Watcher(directory, function()
-		if not vim.api.nvim_buf_is_valid(bid) or not fs.is_directory(directory) then
+		if not fs.is_directory(directory) and vim.api.nvim_buf_is_valid(bid) then
+			vim.api.nvim_buf_delete(bid, { force = true })
+		end
+
+		if not vim.api.nvim_buf_is_valid(bid) then
 			self:_remove_rebuild_fs_watcher(directory)
 		else
 			if self._watch_fs_event then
