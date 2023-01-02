@@ -18,7 +18,12 @@ Use you preferred package manager. Below we use [packer.nvim](https://github.com
 packer
 ```lua
 use {'nvim-lua/plenary.nvim'}
-use {'ipod825/libp.nvim'}
+use {
+	"ipod825/libp.nvim",
+	config = function()
+		require("libp").setup()
+	end,
+}
 use {
 	"ipod825/ranger.nvim",
 	config = function()
@@ -32,6 +37,7 @@ VimPlug
 Plug 'ipod825/libp.nvim'
 Plug 'ipod825/ranger.nvim'
 lua << EOF
+require("libp").setup()
 require("ranger").setup()
 EOF
 ```
