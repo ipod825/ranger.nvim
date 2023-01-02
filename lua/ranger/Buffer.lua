@@ -85,7 +85,7 @@ function M.open(dir_name, opts)
 			end):collect()
 
 			-- Reset cur_row to adapt node number changes.
-			buffer.cur_row = math.min(buffer.cur_row, vim.api.nvim_buf_line_count(buffer.id))
+			buffer.cur_row = math.min(buffer.cur_row, #buffer:nodes())
 			if not buffer:is_editing() then
 				table.insert(res, {
 					line = buffer.cur_row - 1,
