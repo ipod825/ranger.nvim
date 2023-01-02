@@ -79,6 +79,23 @@ function M.open(dir_name, opts)
 		open_cmd = opts.open_cmd,
 		buf_enter_reload = false,
 		content = false,
+		content_highlight_fn = function(buffer)
+			local res = KVIter(buffer.root:flatten_children()):mapkv(function(row, node)
+				return row, { line = row - 1, hl_group = node.highlight, col_start = 0, col_end = -1 }
+			end):collect()
+
+			-- Reset cur_row to adapt node number changes.
+			buffer.cur_row = math.min(buffer.cur_row, vim.api.nvim_buf_line_count(buffer.id))
+			if not buffer:is_editing() then
+				table.insert(res, {
+					line = buffer.cur_row - 1,
+					hl_group = buffer:nodes(buffer.cur_row).highlight .. "Sel",
+					col_start = 0,
+					col_end = -1,
+				})
+			end
+			return res
+		end,
 		bo = {
 			filetype = "ranger",
 			bufhidden = "hide",
@@ -155,19 +172,6 @@ function M:build_nodes(directory)
 	self:_add_dir_node_children(root, directory)
 
 	return root
-end
-
--- Called by parent (ui.Buffer:reload) to set highlight after reload.
-function M:reload_highlight()
-	self:clear_hl(1, -1)
-	for row, node in KVIter(self.root:flatten_children()) do
-		self:set_hl(node.highlight, row)
-	end
-
-	if not self:is_editing() then
-		self.cur_row = math.min(self.cur_row, vim.api.nvim_buf_line_count(self.id))
-		self:set_selected_row_hl(self.cur_row)
-	end
 end
 
 function M:add_right_display(key, fn)
@@ -254,11 +258,14 @@ function M:set_unselected_row_hl(row)
 	if row < 1 then
 		return
 	end
-	self:set_hl(self:nodes(row).highlight, row)
+	self:set_hl({ hl_group = self:nodes(row).highlight, row = row })
 end
 
 function M:set_selected_row_hl(row)
-	self:set_hl(self:nodes(row).highlight .. "Sel", row)
+	self:set_hl({
+		hl_group = self:nodes(row).highlight .. "Sel",
+		row = row,
+	})
 end
 
 function M:disable_fs_event_watcher()
@@ -358,7 +365,7 @@ function M:_config_new(dir_name, opts)
 				return
 			end
 			local new_row = vimfn.getrow()
-			self:clear_hl(self.cur_row)
+			self:clear_hl({ row_start = self.cur_row })
 			-- TODO(smwang): Workaround on bug of clear_highlight
 			-- https://github.com/neovim/neovim/issues/19511
 			self:set_unselected_row_hl(self.cur_row - 1)

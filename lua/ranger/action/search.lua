@@ -1,7 +1,7 @@
 local M = {}
 local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
-local VIter = require("libp.datatype.VIter")
+local List = require("libp.datatype.List")
 local KVIter = require("libp.datatype.KVIter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
@@ -23,14 +23,26 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 		return find(n.name)
 	end)
 
+	search_buffer.content_highlight_fn = function()
+		local res = List()
+
+		for row, n in KVIter(filtered_nodes) do
+			local beg, ends = find(n.name)
+			res:append({ hl_group = n.highlight, line = row - 1 })
+			if beg then
+				table.insert(res, { hl_group = "IncSearch", line = row - 1, col_start = beg - 1, col_end = ends })
+			end
+		end
+		return res
+	end
 	search_buffer:set_content_and_reload(filtered_nodes:map(function(e)
 		return e.name
 	end))
 
-	search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
-		local beg, ends = find(n.name)
-		return row, { { n.highlight, row }, { "IncSearch", row, beg, ends } }
-	end))
+	-- search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
+	-- 	local beg, ends = find(n.name)
+	-- 	return row, { { n.highlight, row }, { "IncSearch", row, beg, ends } }
+	-- end))
 end
 
 function M.move(search_window, direction)
