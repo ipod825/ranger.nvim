@@ -306,7 +306,7 @@ function M:_add_fs_event_watcher(directory)
 	end
 
 	local bid = self.id
-	local on_fs_update = a.void(throttle.max_per_second(1, function()
+	local on_fs_update = a.void(throttle.delay_call_last(500, function()
 		self:rebuild_nodes()
 		self:draw()
 	end))
