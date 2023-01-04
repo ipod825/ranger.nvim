@@ -126,7 +126,7 @@ function M.copy_selected()
 		if node then
 			controller:set(node, State.COPIED)
 		else
-			add_managed_buffer(buffer, State.COPY)
+			add_managed_buffer(buffer, State.COPIED)
 			buffer:draw()
 		end
 		maybe_recycle_managed_buffers(buffer, State.SELECTED)
