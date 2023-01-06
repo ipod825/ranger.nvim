@@ -23,7 +23,9 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 		return find(n.name)
 	end)
 
-	search_buffer.content_highlight_fn = function()
+		search_buffer:set_content_and_reload(filtered_nodes:map(function(e)
+		return e.name
+	end), {content_highlight_fn=function()
 		local res = List()
 
 		for row, n in KVIter(filtered_nodes) do
@@ -35,9 +37,8 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 		end
 		return res
 	end
-	search_buffer:set_content_and_reload(filtered_nodes:map(function(e)
-		return e.name
-	end))
+
+})
 
 	-- search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
 	-- 	local beg, ends = find(n.name)
