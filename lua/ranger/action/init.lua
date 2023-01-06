@@ -132,7 +132,7 @@ function M.rename(rename_fn)
 			-- And the result for the new would be:
 			--  {[0] = {'./newa'}, [1] = {'./newa/newb'}}
 			local res = {}
-			local lines = buffer:get_lines()
+			local lines = vimfn.buf_get_lines({ buffer = buffer.id })
 			local nodes = buffer.root:flatten_children()
 			assert(#nodes == #lines)
 
@@ -221,7 +221,7 @@ function M.create_entries()
 			buffer:draw(true)
 		end,
 		get_items = function()
-			return Set(buffer:get_lines())
+			return Set(vimfn.buf_get_lines({buffer=buffer.id}))
 		end,
 		update = function(ori_items, new_items)
 			buffer:disable_fs_event_watcher()
