@@ -23,22 +23,28 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 		return find(n.name)
 	end)
 
-		search_buffer:set_content_and_reload(filtered_nodes:map(function(e)
-		return e.name
-	end), {content_highlight_fn=function()
-		local res = List()
+	search_buffer:set_content_and_reload(
+		filtered_nodes:map(function(e)
+			return e.name
+		end),
+		{
+			content_highlight_fn = function()
+				local res = List()
 
-		for row, n in KVIter(filtered_nodes) do
-			local beg, ends = find(n.name)
-			res:append({ hl_group = n.highlight, line = row - 1 })
-			if beg then
-				table.insert(res, { hl_group = "IncSearch", line = row - 1, col_start = beg - 1, col_end = ends })
-			end
-		end
-		return res
-	end
-
-})
+				for row, n in KVIter(filtered_nodes) do
+					local beg, ends = find(n.name)
+					res:append({ hl_group = n.highlight, line = row - 1 })
+					if beg then
+						table.insert(
+							res,
+							{ hl_group = "IncSearch", line = row - 1, col_start = beg - 1, col_end = ends }
+						)
+					end
+				end
+				return res
+			end,
+		}
+	)
 
 	-- search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
 	-- 	local beg, ends = find(n.name)
@@ -86,7 +92,7 @@ function M.start()
 			if pattern ~= last_pattern then
 				M.draw_search_buffer(buffer, search_buffer, pattern)
 				local search_window_row = vimfn.getrow(search_window.id)
-				search_res = search_buffer:get_line(search_window_row)
+				search_res = vimfn.buf_get_line({ buffer = search_buffer.id, row = search_window_row - 1 })
 			end
 			return pattern
 		end,
