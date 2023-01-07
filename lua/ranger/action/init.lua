@@ -221,7 +221,7 @@ function M.create_entries()
 			buffer:draw(true)
 		end,
 		get_items = function()
-			return Set(vimfn.buf_get_lines({buffer=buffer.id}))
+			return Set(vimfn.buf_get_lines({ buffer = buffer.id }))
 		end,
 		update = function(ori_items, new_items)
 			buffer:disable_fs_event_watcher()

@@ -81,7 +81,7 @@ function M.open(dir_name, opts)
 		content = false,
 		content_highlight_fn = function(buffer)
 			local res = iter.KV(buffer.root:flatten_children())
-				:mapkv(function(row, node)
+				:map(function(row, node)
 					return row, { line = row - 1, hl_group = node.highlight, col_start = 0, col_end = -1 }
 				end)
 				:collect()
