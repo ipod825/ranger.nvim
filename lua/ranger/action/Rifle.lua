@@ -4,7 +4,7 @@ local constants = require("ranger.constants")
 local vimfn = require("libp.utils.vimfn")
 local List = require("libp.datatype.List")
 local osfn = require("libp.utils.osfn")
-local itt = require("libp.itertools")
+local iter = require("libp.iter")
 local a = require("plenary.async")
 
 function M.Rule(fn, ...)
@@ -66,7 +66,7 @@ function M:init(config_file)
 			end
 
 			local tests = List()
-			for test in itt.values(vim.split(sp[1], ",")) do
+			for test in iter.values(vim.split(sp[1], ",")) do
 				local test_sp = List(vim.split(test, " ")):filter(function(e)
 					return #e > 0
 				end)
@@ -86,10 +86,10 @@ function M:init(config_file)
 end
 
 function M:decide_open_cmd(path)
-	for rule in itt.values(self.rules) do
+	for rule in iter.values(self.rules) do
 		local succ = true
 		local tests, command = unpack(rule)
-		for test in itt.values(tests) do
+		for test in iter.values(tests) do
 			if not test(path) then
 				succ = false
 				break
@@ -103,10 +103,10 @@ end
 
 function M:list_available_cmd(path)
 	local res = List()
-	for rule in itt.values(self.rules) do
+	for rule in iter.values(self.rules) do
 		local succ = true
 		local tests, command = unpack(rule)
-		for test in itt.values(tests) do
+		for test in iter.values(tests) do
 			if not test(path) then
 				succ = false
 				break

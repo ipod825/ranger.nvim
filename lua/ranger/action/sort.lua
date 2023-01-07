@@ -3,7 +3,7 @@ local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
 local uv = vim.loop
 local vimfn = require("libp.utils.vimfn")
-local itt = require("libp.itertools")
+local iter = require("libp.iter")
 
 local Order = { ASCENDING = 1, DESCENDING = 2 }
 
@@ -45,7 +45,7 @@ end
 local file_sz_display_wid = 6
 local function size_str(st_size)
 	local res = tonumber(st_size)
-	for u in itt.values({ "B", "K", "M", "G", "T", "P" }) do
+	for u in iter.values({ "B", "K", "M", "G", "T", "P" }) do
 		if res < 1024 then
 			res = tostring(res):sub(1, file_sz_display_wid - 2):gsub("%.$", "")
 			return ("%s%s %s"):format((" "):rep(file_sz_display_wid - #res - 2), res, u)

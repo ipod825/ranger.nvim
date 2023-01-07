@@ -1,6 +1,6 @@
 local M = require("libp.datatype.Class"):EXTEND()
 local List = require("libp.datatype.List")
-local values = require("libp.itertools").values
+local iter = require("libp.iter")
 local args = require("libp.args")
 
 function M.cmp(a, b)
@@ -60,7 +60,7 @@ function M:add_child(child)
 end
 
 function M:extend_children(new_children)
-	for c in values(new_children) do
+	for c in iter.values(new_children) do
 		c.parent = self
 		c.level = self.level + 1
 	end

@@ -5,10 +5,10 @@ local vimfn = require("libp.utils.vimfn")
 local pathfn = require("libp.utils.pathfn")
 local Set = require("libp.datatype.Set")
 local fs = require("libp.fs")
-local itt = require("libp.itertools")
+local iter = require("libp.iter")
 local abbrev = require("ranger.abbrev")
-local VIter = require("libp.datatype.VIter")
-local KVIter = require("libp.datatype.KVIter")
+local iter = require("libp.iter")
+local iter = require("libp.iter")
 local OrderedDict = require("libp.datatype.OrderedDict")
 local uv = require("libp.fs.uv")
 local a = require("plenary.async")
@@ -80,9 +80,11 @@ function M.open(dir_name, opts)
 		buf_enter_reload = false,
 		content = false,
 		content_highlight_fn = function(buffer)
-			local res = KVIter(buffer.root:flatten_children()):mapkv(function(row, node)
-				return row, { line = row - 1, hl_group = node.highlight, col_start = 0, col_end = -1 }
-			end):collect()
+			local res = iter.KV(buffer.root:flatten_children())
+				:mapkv(function(row, node)
+					return row, { line = row - 1, hl_group = node.highlight, col_start = 0, col_end = -1 }
+				end)
+				:collect()
 
 			-- Reset cur_row to adapt node number changes.
 			buffer.cur_row = math.min(buffer.cur_row, #buffer:nodes())
@@ -138,9 +140,9 @@ function M:_add_dir_node_children(node, abspath)
 		return
 	end
 
-	entries = VIter(entries)
+	entries = iter.V(entries)
 		:filter(function(e)
-			for pattern in itt.values(self.ignore_patterns) do
+			for pattern in iter.values(self.ignore_patterns) do
 				if e.name:match(pattern) then
 					return false
 				end
@@ -258,13 +260,13 @@ function M:set_unselected_row_hl(row)
 	if row < 1 then
 		return
 	end
-	self:set_hl({ hl_group = self:nodes(row).highlight, row = row })
+	self:set_hl({ hl_group = self:nodes(row).highlight, line = row - 1 })
 end
 
 function M:set_selected_row_hl(row)
 	self:set_hl({
 		hl_group = self:nodes(row).highlight .. "Sel",
-		row = row,
+		line = row - 1,
 	})
 end
 
@@ -365,7 +367,7 @@ function M:_config_new(dir_name, opts)
 				return
 			end
 			local new_row = vimfn.getrow()
-			self:clear_hl({ row_start = self.cur_row })
+			self:clear_hl({ line_start = self.cur_row - 1, line_end = self.cur_row })
 			-- TODO(smwang): Workaround on bug of clear_highlight
 			-- https://github.com/neovim/neovim/issues/19511
 			self:set_unselected_row_hl(self.cur_row - 1)

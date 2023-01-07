@@ -1,10 +1,10 @@
 local M = {}
 local elipsis_note = "…"
 local vimfn = require("libp.utils.vimfn")
-local VIter = require("libp.datatype.VIter")
+local iter = require("libp.iter")
 local functional = require("libp.functional")
 local List = require("libp.datatype.List")
-local itt = require("libp.itertools")
+local iter = require("libp.iter")
 
 local function bisect_trunc(s, w)
 	if #s == 0 then
@@ -12,13 +12,13 @@ local function bisect_trunc(s, w)
 	end
 
 	local chars = List(vimfn.str_to_char(s))
-	local length = VIter(chars)
+	local length = iter.V(chars)
 		:map(function(v)
 			return vim.fn.strwidth(v)
 		end)
 		:fold(0, functional.binary_op.add)
 		:collect()
-	local bytes = VIter(chars)
+	local bytes = iter.V(chars)
 		:map(function(v)
 			return #v
 		end)
@@ -81,9 +81,9 @@ function M.path(path, width)
 	local sp = vim.split(path, "/")
 	local szm1 = #sp - 1
 	local total = 2 * szm1 + #sp[#sp]
-	for i in itt.range(szm1, 1, -1) do
+	for i in iter.range(szm1, 1, -1) do
 		if total + #sp[i] - 1 > width then
-			for j in itt.range(i) do
+			for j in iter.range(i) do
 				sp[j] = sp[j]:sub(1, 1)
 			end
 			return require("libp.utils.pathfn").join_array(sp)

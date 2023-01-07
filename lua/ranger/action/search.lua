@@ -2,7 +2,7 @@ local M = {}
 local ui = require("libp.ui")
 local utils = require("ranger.action.utils")
 local List = require("libp.datatype.List")
-local KVIter = require("libp.datatype.KVIter")
+local iter = require("libp.iter")
 local bind = require("libp.functional").bind
 local vimfn = require("libp.utils.vimfn")
 local functional = require("libp.functional")
@@ -31,7 +31,7 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 			content_highlight_fn = function()
 				local res = List()
 
-				for row, n in KVIter(filtered_nodes) do
+				for row, n in iter.KV(filtered_nodes) do
 					local beg, ends = find(n.name)
 					res:append({ hl_group = n.highlight, line = row - 1 })
 					if beg then
@@ -45,11 +45,6 @@ function M.draw_search_buffer(buffer, search_buffer, pattern)
 			end,
 		}
 	)
-
-	-- search_buffer:reload_highlight(VIter(filtered_nodes):mapkv(function(row, n)
-	-- 	local beg, ends = find(n.name)
-	-- 	return row, { { n.highlight, row }, { "IncSearch", row, beg, ends } }
-	-- end))
 end
 
 function M.move(search_window, direction)
@@ -104,7 +99,7 @@ function M.start()
 	vim.cmd("stopinsert")
 
 	if confirmed_search_res then
-		for i, node in KVIter(buffer:nodes()) do
+		for i, node in iter.KV(buffer:nodes()) do
 			if node.name == search_res then
 				vimfn.setrow(i)
 				break

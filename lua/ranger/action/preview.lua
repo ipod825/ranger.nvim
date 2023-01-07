@@ -3,7 +3,7 @@ local utils = require("ranger.action.utils")
 local Buffer = require("ranger.Buffer")
 local vimfn = require("libp.utils.vimfn")
 local ui = require("libp.ui")
-local itt = require("libp.itertools")
+local iter = require("libp.iter")
 local mime = require("libp.mime")
 local a = require("plenary.async")
 local functional = require("libp.functional")
@@ -26,7 +26,7 @@ function M.setup(opts)
 end
 
 function M.close_all_preview_windows_in_current_tabpage()
-	for w in itt.values(vim.api.nvim_tabpage_list_wins(0)) do
+	for w in iter.values(vim.api.nvim_tabpage_list_wins(0)) do
 		if vimfn.win_get_var(w, "ranger_previewer") then
 			vim.api.nvim_win_close(w, true)
 		end
@@ -34,7 +34,7 @@ function M.close_all_preview_windows_in_current_tabpage()
 end
 
 function M.close_all_invalid_preview_windows_in_current_tabpage()
-	for w in itt.values(vim.api.nvim_tabpage_list_wins(0)) do
+	for w in iter.values(vim.api.nvim_tabpage_list_wins(0)) do
 		local ranger_previewer = vimfn.win_get_var(w, "ranger_previewer")
 		if ranger_previewer and not vim.api.nvim_win_is_valid(ranger_previewer) then
 			vim.api.nvim_win_close(w, true)
