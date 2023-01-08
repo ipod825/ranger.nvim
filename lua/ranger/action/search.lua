@@ -87,7 +87,7 @@ function M.start()
 			if pattern ~= last_pattern then
 				M.draw_search_buffer(buffer, search_buffer, pattern)
 				local search_window_row = vimfn.getrow(search_window.id)
-				search_res = vimfn.buf_get_line({ buffer = search_buffer.id, row = search_window_row - 1 })
+				search_res = vimfn.buf_get_line(search_window_row - 1,search_buffer.id, row)
 			end
 			return pattern
 		end,
