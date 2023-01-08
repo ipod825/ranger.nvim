@@ -142,7 +142,7 @@ Toggle Show hidden files. This affects all ranger buffers.
 `S`                                       *ranger.action.sort*
 Sort content in current directory with |ranger-menu|.
 
-`S`                                       *ranger.preview.toggle*
+`P`                                       *ranger.preview.toggle*
 Toggle enter preview mode. See |ranger-preview-mode|. This affects all ranger
 buffers.
 
