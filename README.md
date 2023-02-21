@@ -1,5 +1,9 @@
-ranger
-=============
+# ranger
+
+ranger.nvim is inspired by ranger (the console file manager) and is a rewrite
+of [vim-netranger](https://github.com/ipod825/vim-netranger), which brings together the good-looking UI in ranger, native
+key-binding and editing power from vim. 
+
 ![Neovim](https://img.shields.io/badge/NeoVim-%2357A143.svg?&style=for-the-badge&logo=neovim&logoColor=white)
 
 [![CI Status](https://github.com/ipod825/ranger.nvim/workflows/CI/badge.svg?branch=main)](https://github.com/ipod825/ranger.nvim/actions)
@@ -10,7 +14,6 @@ ranger
 3. [nerd-font](https://github.com/ryanoasis/nerd-fonts#font-installation)
 
 ## Installation
-------------
 
 Use you preferred package manager. Below we use [packer.nvim](https://github.com/wbthomason/packer.nvim) as an example and [VimPlug](https://github.com/junegunn/vim-plug) as an example.
 
