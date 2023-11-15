@@ -362,12 +362,6 @@ function M:_config_new(dir_name, opts)
     vim.api.nvim_create_autocmd("CursorMoved", {
         buffer = self.id,
         callback = function()
-            -- See previewer.lua on when this will be set.
-            if vim.w.disable_next_ranger_cursor_move_handle then
-                vim.w.disable_next_ranger_cursor_move_handle = false
-                return
-            end
-
             if self:is_editing() or vim.fn.mode() ~= "n" then
                 return
             end

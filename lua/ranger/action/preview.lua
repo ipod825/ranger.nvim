@@ -134,10 +134,6 @@ function M.preview()
             vim.api.nvim_win_set_buf(previewee_win, previewee_buffer.id)
             vim.api.nvim_win_set_var(previewee_win, "ranger_previewer", previewer_win)
 
-            -- nvim_set_current_win trigger CursorMoved event on previewer
-            -- buffer. Setting vim.o.eventignore does help. We thus use a window
-            -- variable to help here.
-            vim.w[previewer_win].disable_next_ranger_cursor_move_handle = true
             vim.api.nvim_set_current_win(previewer_win)
             post_previewee_window_open(previewee_win)
         end
